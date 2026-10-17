@@ -1,0 +1,36 @@
+# ==========================================
+# GIT IGNORE - SECURITY & ARTIFACTS
+# ==========================================
+
+# Environment variables & secrets (NEVER COMMIT)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python / Django
+backend/.env
+backend/.venv/
+backend/__pycache__/
+backend/*/__pycache__/
+*.py[cod]
+*$py.class
+backend/staticfiles/
+*.sqlite3
+*.sqlite3.backup
+*.log
+
+# Node / Next.js
+frontend/.env.local
+frontend/.env.*.local
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.vercel/
+
+# Operating Systems
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

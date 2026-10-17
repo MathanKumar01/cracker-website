@@ -1,0 +1,730 @@
+[
+  {
+    "code": "1",
+    "name": "Gold Laxmi (5 Pcs)",
+    "category": "One Sound Crackers",
+    "unit": "1 Pkt",
+    "price": 32
+  },
+  {
+    "code": "2",
+    "name": "2 3/4\" Kuruvi (5 Pcs)",
+    "category": "One Sound Crackers",
+    "unit": "1 Pkt",
+    "price": 12
+  },
+  {
+    "code": "3",
+    "name": "3 1/2\" Laxmi (5 Pcs)",
+    "category": "One Sound Crackers",
+    "unit": "1 Pkt",
+    "price": 19
+  },
+  {
+    "code": "4",
+    "name": "4\" Laxmi (5 Pcs)",
+    "category": "One Sound Crackers",
+    "unit": "1 Pkt",
+    "price": 26
+  },
+  {
+    "code": "5",
+    "name": "5\" Jai Hanuman (5 Pcs)",
+    "category": "One Sound Crackers",
+    "unit": "1 Pkt",
+    "price": 62
+  },
+  {
+    "code": "6",
+    "name": "King of Kong Bomb (10 Pcs)",
+    "category": "Bombs",
+    "unit": "1 Box",
+    "price": 113
+  },
+  {
+    "code": "6",
+    "name": "Classic Bomb (10 Pcs)",
+    "category": "Bombs",
+    "unit": "1 Box",
+    "price": 125
+  },
+  {
+    "code": "8",
+    "name": "King of Kong 5 ply Bomb (10 Pcs)",
+    "category": "Bombs",
+    "unit": "1 Box",
+    "price": 150
+  },
+  {
+    "code": "9",
+    "name": "Jurrasic Bomb (10 Pcs)",
+    "category": "Bombs",
+    "unit": "1 Box",
+    "price": 237
+  },
+  {
+    "code": "10",
+    "name": "DTS Bomb",
+    "category": "Bombs",
+    "unit": "10 pcs",
+    "price": 291
+  },
+  {
+    "code": "119",
+    "name": "Sky Thunder Bomb",
+    "category": "Bombs",
+    "unit": "1 box",
+    "price": 437
+  },
+  {
+    "code": "120",
+    "name": "Flower and Paper Bomb",
+    "category": "Bombs",
+    "unit": "1 pce",
+    "price": 59
+  },
+  {
+    "code": "125",
+    "name": "Hydro Bomb",
+    "category": "Bombs",
+    "unit": "10 pcs",
+    "price": 87
+  },
+  {
+    "code": "12",
+    "name": "Bijili Red (100 Pcs)",
+    "category": "Bijili",
+    "unit": "1 Pkt",
+    "price": 49
+  },
+  {
+    "code": "14",
+    "name": "St. Bijili (100 Pcs)",
+    "category": "Bijili",
+    "unit": "1 Box",
+    "price": 62
+  },
+  {
+    "code": "15",
+    "name": "Ground Chakkar Big (10 Pcs)",
+    "category": "Ground Chakkar",
+    "unit": "1 Box",
+    "price": 49
+  },
+  {
+    "code": "16",
+    "name": "Ground Chakkar Special (10 Pcs)",
+    "category": "Ground Chakkar",
+    "unit": "1 Box",
+    "price": 87
+  },
+  {
+    "code": "17",
+    "name": "Ground Chakkar Deluxe (10 Pcs)",
+    "category": "Ground Chakkar",
+    "unit": "1 Box",
+    "price": 192
+  },
+  {
+    "code": "18",
+    "name": "Flower Pot Big (10 Pcs)",
+    "category": "Flower Pot",
+    "unit": "1 Box",
+    "price": 76
+  },
+  {
+    "code": "19",
+    "name": "Flower Pot Special (10 Pcs)",
+    "category": "Flower Pot",
+    "unit": "1 Box",
+    "price": 98
+  },
+  {
+    "code": "21",
+    "name": "Flower Pot Asoka (10 Pcs)",
+    "category": "Flower Pot",
+    "unit": "1 Box",
+    "price": 153
+  },
+  {
+    "code": "22",
+    "name": "Flower Pot Colour Khoti (10 Pcs)",
+    "category": "Flower Pot",
+    "unit": "1 Box",
+    "price": 255
+  },
+  {
+    "code": "118",
+    "name": "Flower Pot Small",
+    "category": "Flower Pot",
+    "unit": "10 pcs",
+    "price": 63
+  },
+  {
+    "code": "20",
+    "name": "Flower Pot Special Deluxe (10 Pcs)",
+    "category": "Flower Pot",
+    "unit": "1 Box",
+    "price": 153
+  },
+  {
+    "code": "117",
+    "name": "Flower pot Deluxe",
+    "category": "Flower Pot",
+    "unit": "5 pcs",
+    "price": 190
+  },
+  {
+    "code": "23",
+    "name": "Magical Shower (1 Pce)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 15
+  },
+  {
+    "code": "24",
+    "name": "7 Shots (1 Pce)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 21
+  },
+  {
+    "code": "25",
+    "name": "Ganga Jamuna (5 Pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 125
+  },
+  {
+    "code": "26",
+    "name": "Chit Phut (10 Pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 37
+  },
+  {
+    "code": "27",
+    "name": "Disco Shower (5 Pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 126
+  },
+  {
+    "code": "28",
+    "name": "Mega Tri Colour (5 Pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 375
+  },
+  {
+    "code": "31",
+    "name": "Bada Peacock",
+    "category": "Fancy Night Crackers",
+    "unit": "5 pcs",
+    "price": 507
+  },
+  {
+    "code": "33",
+    "name": "Helicopter (5 Pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 113
+  },
+  {
+    "code": "34",
+    "name": "Pambaram",
+    "category": "Fancy Night Crackers",
+    "unit": "5 pcs",
+    "price": 126
+  },
+  {
+    "code": "35",
+    "name": "Smoke (3 Pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 229
+  },
+  {
+    "code": "37",
+    "name": "Flower and Paper Bomb (1 Pce)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 72
+  },
+  {
+    "code": "43",
+    "name": "1\" Chotta Fancy (1 Pce)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 50
+  },
+  {
+    "code": "44",
+    "name": "2\" Night Star (1 Pce)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 86
+  },
+  {
+    "code": "45",
+    "name": "2\" Galaxy (3 pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 347
+  },
+  {
+    "code": "46",
+    "name": "3 1/2\" Light House",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 373
+  },
+  {
+    "code": "48",
+    "name": "3 1/2\" Double ball Fun Max",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 733
+  },
+  {
+    "code": "81",
+    "name": "2\" Set Out 36 Shell",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 5754
+  },
+  {
+    "code": "80",
+    "name": "6\" Magical Diamond Shower",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 229
+  },
+  {
+    "code": "77",
+    "name": "Siren (3 Pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "1 Box",
+    "price": 378
+  },
+  {
+    "code": "79",
+    "name": "6\" Magical Crackling Shower",
+    "category": "Fancy Night Crackers",
+    "unit": "1 box",
+    "price": 126
+  },
+  {
+    "code": "96",
+    "name": "Photo flash",
+    "category": "Fancy Night Crackers",
+    "unit": "1 piece",
+    "price": 12
+  },
+  {
+    "code": "126",
+    "name": "7 Shots (5 pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "5 pcs",
+    "price": 96
+  },
+  {
+    "code": "127",
+    "name": "Siren (2 pcs)",
+    "category": "Fancy Night Crackers",
+    "unit": "2 pcs",
+    "price": 255
+  },
+  {
+    "code": "129",
+    "name": "2\" Mafia",
+    "category": "Fancy Night Crackers",
+    "unit": "1 pce",
+    "price": 87
+  },
+  {
+    "code": "130",
+    "name": "2\" Galaxy",
+    "category": "Fancy Night Crackers",
+    "unit": "3 pcs",
+    "price": 306
+  },
+  {
+    "code": "131",
+    "name": "2\" Sky Crackling",
+    "category": "Fancy Night Crackers",
+    "unit": "1 pce",
+    "price": 153
+  },
+  {
+    "code": "132",
+    "name": "3 1/2\" Light House",
+    "category": "Fancy Night Crackers",
+    "unit": "1 pce",
+    "price": 366
+  },
+  {
+    "code": "73",
+    "name": "Snake Serpant",
+    "category": "Kids Items",
+    "unit": "1 Box",
+    "price": 5
+  },
+  {
+    "code": "74",
+    "name": "Electric Stone",
+    "category": "Kids Items",
+    "unit": "1 Box",
+    "price": 13
+  },
+  {
+    "code": "42",
+    "name": "12\" Mega pencil",
+    "category": "Kids Items",
+    "unit": "1 Box",
+    "price": 126
+  },
+  {
+    "code": "38",
+    "name": "1 1/2\" Twinkling Star (10 Pcs)",
+    "category": "Kids Items",
+    "unit": "1 Box",
+    "price": 24
+  },
+  {
+    "code": "39",
+    "name": "4\" Twinkling Star (10 Pcs)",
+    "category": "Kids Items",
+    "unit": "1 Box",
+    "price": 75
+  },
+  {
+    "code": "99",
+    "name": "Cartoon",
+    "category": "Kids Items",
+    "unit": "5 pieces",
+    "price": 17
+  },
+  {
+    "code": "112",
+    "name": "10\" Deluxe Pencil",
+    "category": "Kids Items",
+    "unit": "10 pcs",
+    "price": 102
+  },
+  {
+    "code": "113",
+    "name": "7\" Pencil",
+    "category": "Kids Items",
+    "unit": "10 pcs",
+    "price": 62
+  },
+  {
+    "code": "134",
+    "name": "Magic Pops",
+    "category": "Kids Items",
+    "unit": "1 box",
+    "price": 13
+  },
+  {
+    "code": "58",
+    "name": "7 Cm Electric & Crackling (10 Pcs)",
+    "category": "Sparklers",
+    "unit": "1 Box",
+    "price": 13
+  },
+  {
+    "code": "59",
+    "name": "7 Cm Green & Red (10 Pcs)",
+    "category": "Sparklers",
+    "unit": "1 Box",
+    "price": 15
+  },
+  {
+    "code": "65",
+    "name": "10 Cm Electric and Crackling (10 Pcs)",
+    "category": "Sparklers",
+    "unit": "1 Box",
+    "price": 28
+  },
+  {
+    "code": "62",
+    "name": "15 Cm Electric & Crackling (10 Pcs)",
+    "category": "Sparklers",
+    "unit": "1 Box",
+    "price": 50
+  },
+  {
+    "code": "64",
+    "name": "30 Cm Electric & Crackling",
+    "category": "Sparklers",
+    "unit": "1 Box",
+    "price": 50
+  },
+  {
+    "code": "66",
+    "name": "Rotate Sparklers Yellow",
+    "category": "Sparklers",
+    "unit": "1 Box",
+    "price": 255
+  },
+  {
+    "code": "67",
+    "name": "Rotate Sparklers Color",
+    "category": "Sparklers",
+    "unit": "1 Box",
+    "price": 329
+  },
+  {
+    "code": "114",
+    "name": "10 cm Green & Red",
+    "category": "Sparklers",
+    "unit": "10 pcs",
+    "price": 30
+  },
+  {
+    "code": "115",
+    "name": "15 cm Green & Red",
+    "category": "Sparklers",
+    "unit": "10 pcs",
+    "price": 59
+  },
+  {
+    "code": "116",
+    "name": "30 cm Green & Red",
+    "category": "Sparklers",
+    "unit": "10 pcs",
+    "price": 59
+  },
+  {
+    "code": "49",
+    "name": "Yellow Raider 12 Shot (1 box)",
+    "category": "Multi Shots",
+    "unit": "1 Box",
+    "price": 127
+  },
+  {
+    "code": "51",
+    "name": "Multi Colour 15 Shots (1 box)",
+    "category": "Multi Shots",
+    "unit": "1 Box",
+    "price": 460
+  },
+  {
+    "code": "50",
+    "name": "Yellow Raider 25 Shots (1 box)",
+    "category": "Multi Shots",
+    "unit": "1 Box",
+    "price": 296
+  },
+  {
+    "code": "52",
+    "name": "Multi Colour 30 Shots (1 box)",
+    "category": "Multi Shots",
+    "unit": "1 Box",
+    "price": 512
+  },
+  {
+    "code": "53",
+    "name": "Carnival Multi 60 Shots (1 box)",
+    "category": "Multi Shots",
+    "unit": "1 Box",
+    "price": 1022
+  },
+  {
+    "code": "54",
+    "name": "Rip Rap Multi 120 Shots (1 box)",
+    "category": "Multi Shots",
+    "unit": "1 Box",
+    "price": 2044
+  },
+  {
+    "code": "55",
+    "name": "Pyro sky multi 240 Shots (1 box)",
+    "category": "Multi Shots",
+    "unit": "1 Box",
+    "price": 4044
+  },
+  {
+    "code": "111",
+    "name": "15 Shots Varnajaalam Holi powder",
+    "category": "Multi Shots",
+    "unit": "1 Pce",
+    "price": 624
+  },
+  {
+    "code": "106",
+    "name": "12 Shot Red & Green",
+    "category": "Multi Shots",
+    "unit": "1 pce",
+    "price": 255
+  },
+  {
+    "code": "56",
+    "name": "Baby Rocket (10 Pcs)",
+    "category": "Rockets",
+    "unit": "1 Box",
+    "price": 46
+  },
+  {
+    "code": "57",
+    "name": "Rocket Bomb (10 Pcs)",
+    "category": "Rockets",
+    "unit": "1 Box",
+    "price": 76
+  },
+  {
+    "code": "68",
+    "name": "Crusher Gun (1 Pce)",
+    "category": "Caps and Gun",
+    "unit": "1 Box",
+    "price": 46
+  },
+  {
+    "code": "69",
+    "name": "Excel II Ringcap Gun (1 Pce)",
+    "category": "Caps and Gun",
+    "unit": "1 Box",
+    "price": 75
+  },
+  {
+    "code": "70",
+    "name": "Excel VI Ringcap Gun (1 Pce)",
+    "category": "Caps and Gun",
+    "unit": "1 Box",
+    "price": 100
+  },
+  {
+    "code": "71",
+    "name": "Ring Cap",
+    "category": "Caps and Gun",
+    "unit": "1 Box",
+    "price": 13
+  },
+  {
+    "code": "72",
+    "name": "Roll Cap",
+    "category": "Caps and Gun",
+    "unit": "1 Box",
+    "price": 102
+  },
+  {
+    "code": "75",
+    "name": "Match Box 10 box",
+    "category": "Matches",
+    "unit": "1 Box",
+    "price": 35
+  },
+  {
+    "code": "135",
+    "name": "Mega Laptop",
+    "category": "Matches",
+    "unit": "1 box",
+    "price": 437
+  },
+  {
+    "code": "83",
+    "name": "50x20 Bijili",
+    "category": "New Variety",
+    "unit": "1 Box",
+    "price": 212
+  },
+  {
+    "code": "86",
+    "name": "50x20 Deluxe Bijili",
+    "category": "New Variety",
+    "unit": "1 box",
+    "price": 422
+  },
+  {
+    "code": "85",
+    "name": "0.250 kg Paperburst",
+    "category": "New Variety",
+    "unit": "1 box",
+    "price": 49
+  },
+  {
+    "code": "84",
+    "name": "0.500 kg Paperburst",
+    "category": "New Variety",
+    "unit": "1 Box",
+    "price": 96
+  },
+  {
+    "code": "87",
+    "name": "0.500 kg Paperburst with Powder",
+    "category": "New Variety",
+    "unit": "1 box",
+    "price": 217
+  },
+  {
+    "code": "121",
+    "name": "2 3/4\" Kuruvi Deluxe",
+    "category": "New Variety",
+    "unit": "5 pcs",
+    "price": 17
+  },
+  {
+    "code": "136",
+    "name": "100x20 Bijili",
+    "category": "New Variety",
+    "unit": "1 pkt",
+    "price": 422
+  },
+  {
+    "code": "122",
+    "name": "4\" Laxmi Special",
+    "category": "New Variety",
+    "unit": "5 pcs",
+    "price": 37
+  },
+  {
+    "code": "138",
+    "name": "7 shots Deluxe",
+    "category": "New Variety",
+    "unit": "5 pcs",
+    "price": 249
+  },
+  {
+    "code": "123",
+    "name": "Gold Laxmi Deluxe",
+    "category": "New Variety",
+    "unit": "5 pcs",
+    "price": 50
+  },
+  {
+    "code": "124",
+    "name": "6\" Mega Deluxe",
+    "category": "New Variety",
+    "unit": "5 pcs",
+    "price": 75
+  },
+  {
+    "code": "40",
+    "name": "Jil Jil Deluxe (10 Pcs)",
+    "category": "New Variety",
+    "unit": "1 Box",
+    "price": 50
+  },
+  {
+    "code": "89",
+    "name": "Gift Box (16 Contents)",
+    "category": "Gift Box",
+    "unit": "1 Box",
+    "price": 225
+  },
+  {
+    "code": "90",
+    "name": "Gift Box (35 Contents)",
+    "category": "Gift Box",
+    "unit": "1 Box",
+    "price": 550
+  },
+  {
+    "code": "91",
+    "name": "Gift Box (55 Contents)",
+    "category": "Gift Box",
+    "unit": "1 Box",
+    "price": 1100
+  }
+]
