@@ -16,11 +16,17 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-change-this-secret-ke
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").strip().lower() in ("true", "1", "yes")
 
 # Allowed hosts parsing with whitespace stripping
-raw_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
-ALLOWED_HOSTS = [h.strip() for h in raw_hosts.split(",") if h.strip()]
+raw_hosts = os.environ.get(
+    "ALLOWED_HOSTS",
+    "127.0.0.1,localhost"
+)
+
+ALLOWED_HOSTS = [
+    h.strip() for h in raw_hosts.split(",") if h.strip()
+]
+
 if "testserver" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("testserver")
-
 
 INSTALLED_APPS = [
     "django.contrib.admin",
