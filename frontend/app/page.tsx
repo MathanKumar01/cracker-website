@@ -2,6 +2,7 @@
 import { useMemo, useState, useEffect } from "react";
 import catalog from "../lib/products.json";
 import type { Product, CartLine } from "../lib/types";
+import { getApiUrl, getApiErrorMessage } from "../lib/api";
 
 const products = catalog as Product[];
 const money = (n: number) => "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
@@ -83,7 +84,7 @@ export default function Home() {
     };
 
     try {
-      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api").replace(/\/+$/, "");
+      const apiUrl = getApiUrl();
       const token = localStorage.getItem("kathiravan_token") || localStorage.getItem("sakthi_token");
 
       const headers: Record<string, string> = {
@@ -121,12 +122,7 @@ export default function Home() {
     } catch (error) {
       setNotice({
         type: "error",
-        message:
-          error instanceof TypeError
-            ? "Could not connect to Django API backend. Ensure the backend server is running."
-            : error instanceof Error
-              ? error.message
-              : "Order submission failed. Please try again.",
+        message: getApiErrorMessage(error),
       });
     } finally {
       setIsSubmitting(false);

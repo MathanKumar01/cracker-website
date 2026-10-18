@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
+import { getApiUrl, getApiErrorMessage } from "../../lib/api";
 
-const API = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api").replace(/\/+$/, "");
+const API = getApiUrl();
 
 type OrderItem = {
   product_name: string;
@@ -116,13 +117,7 @@ export default function AdminPage() {
       setAdminKey(keyToVerify);
       setSuccessMsg("Admin API Key verified successfully!");
     } catch (err) {
-      setError(
-        err instanceof TypeError
-          ? "Could not connect to Django backend. Make sure the server is running."
-          : err instanceof Error
-            ? err.message
-            : "Authentication failed."
-      );
+      setError(getApiErrorMessage(err, API));
     } finally {
       setLoading(false);
     }
@@ -163,13 +158,7 @@ export default function AdminPage() {
       setPassword("");
       setSuccessMsg("Logged in successfully as " + data.username);
     } catch (err) {
-      setError(
-        err instanceof TypeError
-          ? "Could not reach Django. Check server and NEXT_PUBLIC_API_URL."
-          : err instanceof Error
-            ? err.message
-            : "Login failed."
-      );
+      setError(getApiErrorMessage(err, API));
     } finally {
       setLoading(false);
     }
@@ -192,13 +181,7 @@ export default function AdminPage() {
       const data = await res.json();
       setOrders(data);
     } catch (err) {
-      setError(
-        err instanceof TypeError
-          ? "Could not reach backend API. Ensure Django is running at " + API
-          : err instanceof Error
-            ? err.message
-            : "Failed to load orders."
-      );
+      setError(getApiErrorMessage(err, API));
     } finally {
       setLoading(false);
     }

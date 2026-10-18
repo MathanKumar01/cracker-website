@@ -15,18 +15,22 @@ except ImportError:
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-change-this-secret-key")
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").strip().lower() in ("true", "1", "yes")
 
-# Allowed hosts parsing with whitespace stripping
-raw_hosts = os.environ.get(
-    "ALLOWED_HOSTS",
-    "127.0.0.1,localhost"
+# Allowed hosts parsing with whitespace stripping (supports both ALLOWED_HOSTS and DJANGO_ALLOWED_HOSTS)
+raw_hosts = (
+    os.environ.get("ALLOWED_HOSTS")
+    or os.environ.get("DJANGO_ALLOWED_HOSTS")
+    or "127.0.0.1,localhost,testserver"
 )
 
 ALLOWED_HOSTS = [
     h.strip() for h in raw_hosts.split(",") if h.strip()
 ]
 
-if "testserver" not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append("testserver")
+# Ensure common deployment hosts and testserver are allowed if not wildcarded
+if "*" not in ALLOWED_HOSTS:
+    for default_domain in [".onrender.com", ".railway.app", ".vercel.app", "testserver"]:
+        if default_domain not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(default_domain)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -99,11 +103,28 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS Configuration
+# Toggle to allow all origins if explicitly set via env (useful for open public store APIs)
+CORS_ALLOW_ALL_ORIGINS = os.environ.get("CORS_ALLOW_ALL_ORIGINS", "false").strip().lower() in ("true", "1", "yes")
+
 raw_cors = os.environ.get("CORS_ALLOWED_ORIGINS", "")
-parsed_cors = [x.strip() for x in raw_cors.split(",") if x.strip()]
+# Filter out origins containing wildcards ('*') from CORS_ALLOWED_ORIGINS since django-cors-headers requires exact origins
+parsed_cors = [
+    x.strip() for x in raw_cors.split(",")
+    if x.strip() and "*" not in x
+]
 CORS_ALLOWED_ORIGINS = list(dict.fromkeys(
     parsed_cors + ["http://localhost:3000", "http://127.0.0.1:3000"]
 ))
+
+# Automatically allow preview and production deployments across modern hosting platforms
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https:\/\/.*\.vercel\.app$",
+    r"^https:\/\/.*\.netlify\.app$",
+    r"^https:\/\/.*\.onrender\.com$",
+    r"^https:\/\/.*\.pages\.dev$",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # Ensure custom headers like X-Admin-Key are allowed through CORS
 CORS_ALLOW_HEADERS = list(default_headers) + [

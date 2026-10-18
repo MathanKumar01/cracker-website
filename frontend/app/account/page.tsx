@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+import { getApiUrl, getApiErrorMessage } from "../../lib/api";
 
-const API = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api").replace(/\/+$/, "");
+const API = getApiUrl();
 
 type OrderItem = {
   product_name: string;
@@ -100,13 +101,7 @@ export default function Account() {
       setPassword("");
       loadMyOrders(data.token);
     } catch (err) {
-      setError(
-        err instanceof TypeError
-          ? "Could not reach Django API. Make sure the backend server is running."
-          : err instanceof Error
-            ? err.message
-            : "Authentication failed."
-      );
+      setError(getApiErrorMessage(err, API));
     } finally {
       setLoading(false);
     }
