@@ -104,8 +104,8 @@ export default function Account() {
         err instanceof TypeError
           ? "Could not reach Django API. Make sure the backend server is running."
           : err instanceof Error
-          ? err.message
-          : "Authentication failed."
+            ? err.message
+            : "Authentication failed."
       );
     } finally {
       setLoading(false);

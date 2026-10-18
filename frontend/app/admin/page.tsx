@@ -120,8 +120,8 @@ export default function AdminPage() {
         err instanceof TypeError
           ? "Could not connect to Django backend. Make sure the server is running."
           : err instanceof Error
-          ? err.message
-          : "Authentication failed."
+            ? err.message
+            : "Authentication failed."
       );
     } finally {
       setLoading(false);
@@ -167,8 +167,8 @@ export default function AdminPage() {
         err instanceof TypeError
           ? "Could not reach Django. Check server and NEXT_PUBLIC_API_URL."
           : err instanceof Error
-          ? err.message
-          : "Login failed."
+            ? err.message
+            : "Login failed."
       );
     } finally {
       setLoading(false);
@@ -196,8 +196,8 @@ export default function AdminPage() {
         err instanceof TypeError
           ? "Could not reach backend API. Ensure Django is running at " + API
           : err instanceof Error
-          ? err.message
-          : "Failed to load orders."
+            ? err.message
+            : "Failed to load orders."
       );
     } finally {
       setLoading(false);
@@ -336,11 +336,10 @@ export default function AdminPage() {
                 setAuthMethod("api_key");
                 setError("");
               }}
-              className={`flex-1 rounded-lg py-2 text-xs font-extrabold transition ${
-                authMethod === "api_key"
+              className={`flex-1 rounded-lg py-2 text-xs font-extrabold transition ${authMethod === "api_key"
                   ? "bg-white text-[#a52b18] shadow-sm"
                   : "text-stone-600 hover:text-stone-900"
-              }`}
+                }`}
             >
               🔑 Admin API Key
             </button>
@@ -350,11 +349,10 @@ export default function AdminPage() {
                 setAuthMethod("credentials");
                 setError("");
               }}
-              className={`flex-1 rounded-lg py-2 text-xs font-extrabold transition ${
-                authMethod === "credentials"
+              className={`flex-1 rounded-lg py-2 text-xs font-extrabold transition ${authMethod === "credentials"
                   ? "bg-white text-[#a52b18] shadow-sm"
                   : "text-stone-600 hover:text-stone-900"
-              }`}
+                }`}
             >
               👤 Staff Username
             </button>
@@ -527,11 +525,10 @@ export default function AdminPage() {
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
-                className={`rounded-full px-4 py-1.5 text-xs font-extrabold capitalize transition ${
-                  statusFilter === s
+                className={`rounded-full px-4 py-1.5 text-xs font-extrabold capitalize transition ${statusFilter === s
                     ? "bg-[#a52b18] text-white shadow-sm"
                     : "border border-orange-200 bg-white text-stone-700 hover:border-orange-400"
-                }`}
+                  }`}
               >
                 {s}
               </button>

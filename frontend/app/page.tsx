@@ -107,7 +107,7 @@ export default function Home() {
           else if (errorData.items) detail = "Check the selected items and quantities.";
           else if (errorData.customer_name || errorData.phone || errorData.address)
             detail = "Please check your name, phone number, and address.";
-        } catch {}
+        } catch { }
         throw new Error(`${detail} (HTTP ${res.status})`);
       }
 
@@ -125,8 +125,8 @@ export default function Home() {
           error instanceof TypeError
             ? "Could not connect to Django API backend. Ensure the backend server is running."
             : error instanceof Error
-            ? error.message
-            : "Order submission failed. Please try again.",
+              ? error.message
+              : "Order submission failed. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -240,11 +240,10 @@ export default function Home() {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${
-                category === c
+              className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${category === c
                   ? "bg-[#a52b18] text-white shadow-sm"
                   : "border border-orange-200 bg-white text-stone-700 hover:border-orange-400"
-              }`}
+                }`}
             >
               {c}
             </button>
@@ -444,11 +443,10 @@ export default function Home() {
 
             {notice && (
               <div
-                className={`mt-4 rounded-2xl p-4 text-xs font-semibold ${
-                  notice.type === "success"
+                className={`mt-4 rounded-2xl p-4 text-xs font-semibold ${notice.type === "success"
                     ? "bg-emerald-50 border border-emerald-200 text-emerald-900"
                     : "bg-red-50 border border-red-200 text-red-900"
-                }`}
+                  }`}
               >
                 {notice.type === "success" ? "🎉 " : "⚠️ "}
                 {notice.message}
