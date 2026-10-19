@@ -30,7 +30,9 @@ export default function Home() {
       products.filter(
         (p) =>
           (category === "All" || p.category === category) &&
-          p.name.toLowerCase().includes(query.toLowerCase())
+          (p.name.toLowerCase().includes(query.toLowerCase()) ||
+            p.category.toLowerCase().includes(query.toLowerCase()) ||
+            p.code.toLowerCase().includes(query.toLowerCase()))
       ),
     [category, query]
   );

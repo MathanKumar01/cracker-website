@@ -105,6 +105,20 @@
     "price": 62
   },
   {
+    "code": "139",
+    "name": "1000 Wala",
+    "category": "Garlands",
+    "unit": "1 Box",
+    "price": 187
+  },
+  {
+    "code": "140",
+    "name": "10000 Wala",
+    "category": "Garlands",
+    "unit": "1 Box",
+    "price": 1980
+  },
+  {
     "code": "15",
     "name": "Ground Chakkar Big (10 Pcs)",
     "category": "Ground Chakkar",
