@@ -249,7 +249,7 @@ export default function AdminPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `kathiravan-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `thaswika-orders-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -306,7 +306,7 @@ export default function AdminPage() {
             </span>
           </div>
 
-          <h1 className="mt-6 text-3xl font-black text-stone-900">Kathiravan Admin</h1>
+          <h1 className="mt-6 text-3xl font-black text-stone-900">Thaswika Admin</h1>
           <p className="mt-1 text-sm text-stone-600">
             Authenticate to view orders, update packing status, and export sales CSV.
           </p>
@@ -412,7 +412,7 @@ export default function AdminPage() {
 
           <div className="mt-6 border-t border-orange-100 pt-4 text-center">
             <p className="text-xs text-stone-500">
-              Kathiravan Crackers Sivakasi · Secured Django REST API
+              Thaswika Crackers Sivakasi · Secured Django REST API
             </p>
           </div>
         </div>

@@ -142,7 +142,7 @@ export default function Home() {
           <a href="#" className="text-xl sm:text-2xl font-black tracking-tight text-[#9e2c18] flex items-center gap-2">
             <span>🪔</span>
             <span>
-              Kathiravan <span className="text-[#2a160d]">Crackers</span>
+              Thaswika <span className="text-[#2a160d]">Crackers</span>
             </span>
           </a>
 
@@ -187,7 +187,7 @@ export default function Home() {
               Make this Diwali <span className="text-amber-300">sparkling & bright.</span>
             </h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-orange-100 sm:text-lg">
-              Authentic Sivakasi fireworks directly from Kathiravan Crackers. Choose your favourite sparklers, bombs, and gift boxes.
+              Authentic Sivakasi fireworks directly from Thaswika Crackers. Choose your favourite sparklers, bombs, and gift boxes.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-4">
               <a
@@ -454,9 +454,11 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-orange-100 bg-white px-4 py-8 text-center text-sm text-stone-600">
-        <b className="text-[#9e2c18] text-base">Kathiravan Crackers</b>
+        <b className="text-[#9e2c18] text-base">Thaswika Crackers</b>
         <p className="mt-1">234A, Aandalpuram St, Chatrapatti Main Road, Sivakasi – 626 123</p>
-        <p className="font-semibold text-stone-800 mt-0.5">Direct Orders / GPay: 7639302319</p>
+        <p className="font-semibold text-stone-800 mt-0.5">
+          Direct Orders / GPay / WhatsApp: <a href="tel:9943349987" className="text-[#9e2c18] hover:underline">9943349987</a>
+        </p>
         <p className="mt-3 text-xs text-stone-400 max-w-xl mx-auto">
           Please follow fireworks safety guidelines. Keep water handy and light crackers in open spaces under adult supervision.
         </p>

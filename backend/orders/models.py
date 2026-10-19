@@ -14,7 +14,7 @@ class Order(models.Model):
     def save(self,*args,**kwargs):
         if not self.order_number:
             from django.utils import timezone
-            self.order_number = "KC" + timezone.now().strftime("%y%m%d%H%M%S") + str(__import__("secrets").randbelow(900)+100)
+            self.order_number = "TC" + timezone.now().strftime("%y%m%d%H%M%S") + str(__import__("secrets").randbelow(900)+100)
         super().save(*args,**kwargs)
     def __str__(self): return f"{self.order_number} - {self.customer_name}"
 class OrderItem(models.Model):

@@ -22,7 +22,7 @@ class AdminKeyUser:
     is_staff = True
     is_superuser = True
     username = "admin_api_key"
-    email = "admin@kathiravan.store"
+    email = "admin@thaswika.store"
 
     def __str__(self):
         return "admin_api_key"
@@ -215,7 +215,7 @@ class ExportOrdersView(APIView):
 
     def get(self, request):
         response = HttpResponse(content_type="text/csv; charset=utf-8")
-        response["Content-Disposition"] = 'attachment; filename="kathiravan-orders.csv"'
+        response["Content-Disposition"] = 'attachment; filename="thaswika-orders.csv"'
         response.write("\ufeff")  # UTF-8 BOM for Microsoft Excel
         writer = csv.writer(response)
         writer.writerow(["Order #", "Date", "Customer Name", "Phone", "Address", "Notes", "Products", "Total (Rs)", "Status"])
@@ -241,7 +241,7 @@ class ExportOrdersView(APIView):
 def health(request):
     return Response({
         "status": "ok",
-        "service": "Kathiravan Crackers API",
+        "service": "Thaswika Crackers API",
         "database": "connected"
     })
 
