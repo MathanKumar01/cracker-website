@@ -149,9 +149,9 @@ def generate_order_pdf(order):
 
     # 1. Header Banner: Brand Info on Left, Invoice & Order Number on Right
     left_header = [
-        Paragraph("🪔 THASWIKA CRACKERS", brand_style),
+        Paragraph("THASWIKA CRACKERS", brand_style),
         Paragraph("Sivakasi Direct Fireworks · Wholesale & Retail", tagline_style),
-        Paragraph("234A, Aandalpuram St, Chatrapatti Main Road, Sivakasi – 626 123", address_style),
+        Paragraph("234A, Aandalpuram St, Chatrapatti Main Road, Sivakasi - 626 123", address_style),
         Paragraph("Phone / WhatsApp: +91 9943349987 · Email: sales@thaswika.store", address_style),
     ]
 
@@ -236,8 +236,8 @@ def generate_order_pdf(order):
             Paragraph("Code", th_center_style),
             Paragraph("Product Description", th_style),
             Paragraph("Qty", th_center_style),
-            Paragraph("Rate (₹)", th_right_style),
-            Paragraph("Subtotal (₹)", th_right_style),
+            Paragraph("Rate (Rs.)", th_right_style),
+            Paragraph("Subtotal (Rs.)", th_right_style),
         ]
     ]
 
@@ -250,8 +250,8 @@ def generate_order_pdf(order):
             Paragraph(str(item.product_code or "-"), td_center_style),
             Paragraph(item.product_name, td_style),
             Paragraph(str(item.quantity), td_center_style),
-            Paragraph(f"₹{item.unit_price:,.2f}", td_right_style),
-            Paragraph(f"₹{item.subtotal:,.2f}", td_right_style),
+            Paragraph(f"{item.unit_price:,.2f}", td_right_style),
+            Paragraph(f"{item.subtotal:,.2f}", td_right_style),
         ])
 
     items_table = Table(table_data, colWidths=col_widths, repeatRows=1)
@@ -283,7 +283,7 @@ def generate_order_pdf(order):
             Paragraph("<b>Total Items Count:</b>", td_style),
             Paragraph(f"<b>{total_qty} units ({len(items)} items)</b>", td_bold_style),
             Paragraph("<b>Grand Total:</b>", ParagraphStyle("GTLabel", parent=td_right_style, fontName="Helvetica-Bold", fontSize=11)),
-            Paragraph(f"<b>₹{order.total:,.2f}</b>", ParagraphStyle("GTVal", parent=td_right_style, fontName="Helvetica-Bold", fontSize=12, textColor=colors.HexColor("#9E2C18"))),
+            Paragraph(f"<b>Rs. {order.total:,.2f}</b>", ParagraphStyle("GTVal", parent=td_right_style, fontName="Helvetica-Bold", fontSize=12, textColor=colors.HexColor("#9E2C18"))),
         ]
     ]
     summary_table = Table(
@@ -321,7 +321,7 @@ def generate_order_pdf(order):
         Paragraph("<b>Safety Guidelines:</b> Always ignite fireworks under adult supervision in open areas. Keep a bucket of water and sand nearby. Store crackers in cool, dry places.", address_style),
         Spacer(1, 6),
         HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#E5D5C5"), spaceAfter=6),
-        Paragraph("Thank you for shopping with Thaswika Crackers Sivakasi! Wishing you and your family a safe, happy & sparkling Diwali! ✨", ParagraphStyle("TY", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=8.5, alignment=TA_CENTER, textColor=colors.HexColor("#9E2C18"))),
+        Paragraph("Thank you for shopping with Thaswika Crackers Sivakasi! Wishing you and your family a safe, happy & sparkling Diwali!", ParagraphStyle("TY", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=8.5, alignment=TA_CENTER, textColor=colors.HexColor("#9E2C18"))),
     ]
 
     footer_table = Table([[footer_box]], colWidths=[523])

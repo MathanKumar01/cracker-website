@@ -117,7 +117,7 @@ export function generateClientOrderPdf(order: OrderData, inline = false): void {
 
   // 2. Customer & Delivery Info Dual-Box
   const boxWidth = (contentWidth - 12) / 2;
-  const boxHeight = 72;
+  const boxHeight = 74;
 
   // Box 1: Customer Details
   doc.setFillColor(250, 246, 240); // #FAF6F0
@@ -138,11 +138,14 @@ export function generateClientOrderPdf(order: OrderData, inline = false): void {
   doc.text(`Account: ${accountStr}`, left + 8, y + 41);
   doc.text(`Phone: ${order.phone || "N/A"}`, left + 8, y + 54);
   if (order.user_email) {
-    doc.text(`Email: ${order.user_email}`, left + 8, y + 65);
+    doc.text(`Email: ${order.user_email}`, left + 8, y + 66);
   }
 
-  // Box 2: Delivery Details & Notes
+  // Box 2: Delivery Details & Notes - explicitly re-set fill and draw colors
   const box2X = left + boxWidth + 12;
+  doc.setFillColor(250, 246, 240); // #FAF6F0
+  doc.setDrawColor(229, 213, 197); // #E5D5C5
+  doc.setLineWidth(0.5);
   doc.roundedRect(box2X, y, boxWidth, boxHeight, 4, 4, "FD");
 
   doc.setTextColor(158, 44, 24);
@@ -162,7 +165,7 @@ export function generateClientOrderPdf(order: OrderData, inline = false): void {
     const noteLines = doc.splitTextToSize(`Note: ${order.notes}`, boxWidth - 16);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(100, 100, 100);
-    doc.text(noteLines[0] || "", box2X + 8, y + 65);
+    doc.text(noteLines[0] || "", box2X + 8, y + 66);
   }
 
   y += boxHeight + 14;
@@ -170,12 +173,12 @@ export function generateClientOrderPdf(order: OrderData, inline = false): void {
   // 3. Order Items Table
   // Column definitions: # (25), Code (50), Description (248), Qty (45), Rate (75), Subtotal (80) = 523pt
   const colX = {
-    num: left + 12,
-    code: left + 45,
-    desc: left + 85,
+    num: left + 14,
+    code: left + 50,
+    desc: left + 88,
     qty: left + 345,
-    rate: left + 430,
-    subtotal: right - 8,
+    rate: left + 435,
+    subtotal: right - 10,
   };
 
   // Table header background
@@ -190,8 +193,8 @@ export function generateClientOrderPdf(order: OrderData, inline = false): void {
   doc.text("Code", colX.code, y + 13, { align: "center" });
   doc.text("Product Description", colX.desc, y + 13);
   doc.text("Qty", colX.qty, y + 13, { align: "center" });
-  doc.text("Rate (₹)", colX.rate, y + 13, { align: "right" });
-  doc.text("Subtotal (₹)", colX.subtotal, y + 13, { align: "right" });
+  doc.text("Rate (Rs.)", colX.rate, y + 13, { align: "right" });
+  doc.text("Subtotal (Rs.)", colX.subtotal, y + 13, { align: "right" });
 
   y += tableHeaderHeight;
 
@@ -215,8 +218,8 @@ export function generateClientOrderPdf(order: OrderData, inline = false): void {
       doc.text("Code", colX.code, y + 13, { align: "center" });
       doc.text("Product Description", colX.desc, y + 13);
       doc.text("Qty", colX.qty, y + 13, { align: "center" });
-      doc.text("Rate (₹)", colX.rate, y + 13, { align: "right" });
-      doc.text("Subtotal (₹)", colX.subtotal, y + 13, { align: "right" });
+      doc.text("Rate (Rs.)", colX.rate, y + 13, { align: "right" });
+      doc.text("Subtotal (Rs.)", colX.subtotal, y + 13, { align: "right" });
       y += tableHeaderHeight;
     }
 
@@ -284,11 +287,12 @@ export function generateClientOrderPdf(order: OrderData, inline = false): void {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("Grand Total:", right - 130, y + 18);
+  doc.text("Grand Total:", right - 145, y + 18);
 
   doc.setTextColor(158, 44, 24);
-  doc.setFontSize(12);
-  doc.text(money(order.total), right - 12, y + 18, { align: "right" });
+  doc.setFontSize(11);
+  const totalStr = `Rs. ${Number(order.total || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  doc.text(totalStr, right - 12, y + 18, { align: "right" });
 
   y += summaryHeight + 14;
 
@@ -344,7 +348,7 @@ export function generateClientOrderPdf(order: OrderData, inline = false): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.text(
-    "Thank you for shopping with Thaswika Crackers Sivakasi! Wishing you and your family a safe, sparkling Diwali! ✨",
+    "Thank you for shopping with Thaswika Crackers Sivakasi! Wishing you and your family a safe, sparkling Diwali!",
     pageWidth / 2,
     y + 69,
     { align: "center" }
