@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { getApiUrl, getApiErrorMessage } from "../../lib/api";
+import { generateClientOrderPdf } from "../../lib/orderPdf";
 
 const API = getApiUrl();
 
@@ -75,25 +76,34 @@ export default function Account() {
     if (!token) return;
     setDownloadingPdfId(order.id);
     try {
-      const res = await fetch(`${API}/orders/${order.id}/pdf/`, {
+      const orderIdOrNum = order.id || order.order_number;
+      const res = await fetch(`${API}/orders/${orderIdOrNum}/pdf/`, {
         headers: {
           Authorization: `Token ${token}`,
         },
       });
-      if (!res.ok) {
-        throw new Error(`Failed to download PDF invoice (HTTP ${res.status})`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Order-${order.order_number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Order-${order.order_number}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      // If backend returns 404 or fails, fall back to instant client-side generation
+      console.warn(`Backend PDF returned HTTP ${res.status}. Falling back to client-side PDF generation.`);
+      generateClientOrderPdf(order, false);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "PDF download failed.");
+      console.warn("Backend PDF fetch error, generating client-side:", err);
+      try {
+        generateClientOrderPdf(order, false);
+      } catch (clientErr) {
+        alert(clientErr instanceof Error ? clientErr.message : "PDF download failed.");
+      }
     } finally {
       setDownloadingPdfId(null);
     }

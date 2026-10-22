@@ -162,18 +162,36 @@ class CustomerOrdersView(APIView):
         return Response(OrderSerializer(orders, many=True).data)
 
 
+def get_order_by_identifier(pk, user=None):
+    """
+    Finds an Order by integer ID or string order_number, optionally filtered by user.
+    """
+    qs = Order.objects.prefetch_related("items").select_related("user")
+    if user and user.is_authenticated:
+        qs = qs.filter(user=user)
+
+    identifier = str(pk).strip()
+    if identifier.isdigit():
+        order = qs.filter(pk=int(identifier)).first()
+        if order:
+            return order
+
+    # Lookup by unique order_number
+    return qs.filter(order_number=identifier).first()
+
+
 class CustomerOrderPdfView(APIView):
     """
     Allows a customer to download the PDF invoice for their own order.
+    Supports lookup by order ID or order_number.
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
-        try:
-            order = Order.objects.prefetch_related("items").select_related("user").get(pk=pk, user=request.user)
-        except Order.DoesNotExist:
-            return Response({"detail": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+        order = get_order_by_identifier(pk, user=request.user)
+        if order is None:
+            return Response({"detail": f"Order '{pk}' not found."}, status=status.HTTP_404_NOT_FOUND)
 
         from .pdf_generator import generate_order_pdf
         pdf_bytes = generate_order_pdf(order)
@@ -200,26 +218,24 @@ class AdminOrderDetailView(APIView):
     """
     View/update/delete an order. Accessible by staff users or holders of the ADMIN_API_KEY.
     Admin confirming an order updates status to 'confirmed'.
+    Supports lookup by order ID or order_number.
     """
     authentication_classes = [TokenAuthentication, AdminApiKeyAuthentication]
     permission_classes = [IsAdminOrHasApiKey]
 
     def get_order(self, pk):
-        try:
-            return Order.objects.prefetch_related("items").select_related("user").get(pk=pk)
-        except Order.DoesNotExist:
-            return None
+        return get_order_by_identifier(pk)
 
     def get(self, request, pk):
         order = self.get_order(pk)
         if order is None:
-            return Response({"detail": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": f"Order '{pk}' not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(OrderSerializer(order).data)
 
     def patch(self, request, pk):
         order = self.get_order(pk)
         if order is None:
-            return Response({"detail": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": f"Order '{pk}' not found."}, status=status.HTTP_404_NOT_FOUND)
         new_status = request.data.get("status")
         if new_status not in dict(Order.STATUS):
             return Response({"detail": "Invalid status."}, status=status.HTTP_400_BAD_REQUEST)
@@ -230,7 +246,7 @@ class AdminOrderDetailView(APIView):
     def delete(self, request, pk):
         order = self.get_order(pk)
         if order is None:
-            return Response({"detail": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": f"Order '{pk}' not found."}, status=status.HTTP_404_NOT_FOUND)
         order.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -239,15 +255,15 @@ class AdminOrderPdfView(APIView):
     """
     Generates and returns an individual user's order in PDF format for the admin.
     Supports inline view (for print/preview) or direct file attachment download.
+    Supports lookup by order ID or order_number.
     """
     authentication_classes = [TokenAuthentication, AdminApiKeyAuthentication]
     permission_classes = [IsAdminOrHasApiKey]
 
     def get(self, request, pk):
-        try:
-            order = Order.objects.prefetch_related("items").select_related("user").get(pk=pk)
-        except Order.DoesNotExist:
-            return Response({"detail": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+        order = get_order_by_identifier(pk)
+        if order is None:
+            return Response({"detail": f"Order '{pk}' not found."}, status=status.HTTP_404_NOT_FOUND)
 
         from .pdf_generator import generate_order_pdf
         pdf_bytes = generate_order_pdf(order)

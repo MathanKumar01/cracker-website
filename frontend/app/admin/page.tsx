@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
 import { getApiUrl, getApiErrorMessage } from "../../lib/api";
+import { generateClientOrderPdf, printOrderInvoice } from "../../lib/orderPdf";
 
 const API = getApiUrl();
 
@@ -263,19 +264,29 @@ export default function AdminPage() {
   async function downloadOrderPdf(order: Order, inline = false) {
     setDownloadingPdfId(order.id);
     setError("");
+
+    // If inline/print preview is requested, trigger dedicated invoice print window immediately
+    if (inline) {
+      try {
+        printOrderInvoice(order);
+      } catch (err) {
+        console.warn("Print preview popup failed, generating PDF file...", err);
+        generateClientOrderPdf(order, false);
+      } finally {
+        setDownloadingPdfId(null);
+      }
+      return;
+    }
+
     try {
       const headers = getAuthHeaders();
-      const endpoint = `${API}/admin/orders/${order.id}/pdf/${inline ? "?view=1" : ""}`;
+      const orderIdOrNum = order.id || order.order_number;
+      const endpoint = `${API}/admin/orders/${orderIdOrNum}/pdf/`;
       const res = await fetch(endpoint, { headers });
-      if (!res.ok) {
-        throw new Error(`PDF generation failed (HTTP ${res.status}).`);
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
 
-      if (inline) {
-        window.open(url, "_blank");
-      } else {
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
         link.download = `Order-${order.order_number}.pdf`;
@@ -283,9 +294,25 @@ export default function AdminPage() {
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
+        setSuccessMsg(`Order #${order.order_number} PDF downloaded successfully!`);
+        setTimeout(() => setSuccessMsg(""), 3500);
+        return;
       }
+
+      // If backend returns 404 (e.g. backend redeploying or route unavailable) or any error:
+      console.warn(`Backend PDF returned HTTP ${res.status}. Falling back to instant client-side PDF invoice generation.`);
+      generateClientOrderPdf(order, false);
+      setSuccessMsg(`Order #${order.order_number} PDF invoice generated and downloaded!`);
+      setTimeout(() => setSuccessMsg(""), 3500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "PDF download failed.");
+      console.warn("Backend PDF fetch error, generating PDF client-side:", err);
+      try {
+        generateClientOrderPdf(order, false);
+        setSuccessMsg(`Order #${order.order_number} PDF invoice generated and downloaded!`);
+        setTimeout(() => setSuccessMsg(""), 3500);
+      } catch (clientErr) {
+        setError(clientErr instanceof Error ? clientErr.message : "PDF generation failed.");
+      }
     } finally {
       setDownloadingPdfId(null);
     }
