@@ -155,3 +155,16 @@ if not DEBUG:
     if os.environ.get("CSRF_COOKIE_SECURE", "false").lower() in ("true", "1", "yes"):
         CSRF_COOKIE_SECURE = True
 
+# ==========================================
+# GMAIL SMTP & ORDER EMAIL NOTIFICATIONS
+# ==========================================
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "true").lower() in ("true", "1", "yes")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "").strip()
+# Automatically sanitize 16-char Google App Passwords (stripping any copied spaces)
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "").replace(" ", "").strip()
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "sales@thaswika.store")
+ADMIN_NOTIFICATION_EMAIL = os.environ.get("ADMIN_NOTIFICATION_EMAIL", EMAIL_HOST_USER).strip()
+

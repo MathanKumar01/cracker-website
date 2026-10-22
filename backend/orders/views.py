@@ -146,6 +146,15 @@ class CreateOrderView(APIView):
         serializer = CreateOrderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         order = serializer.save(user=request.user)
+
+        # Trigger instant notification to store owner (runs in background thread)
+        try:
+            from .email_notifications import send_admin_order_notification
+            send_admin_order_notification(order)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Failed to dispatch order notification: {e}")
+
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
 
