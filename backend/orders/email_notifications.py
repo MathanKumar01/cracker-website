@@ -310,44 +310,102 @@ def send_customer_order_confirmation(order, synchronous=False):
 
     try:
         items = list(order.items.all())
+        total_qty = sum(item.quantity for item in items)
         created_str = order.created_at.strftime("%d-%b-%Y %I:%M %p") if order.created_at else "Just now"
-        subject = f"🎉 Order Confirmed #{order.order_number} - Thaswika Crackers"
+        subject = f"✅ Order Confirmed! #{order.order_number} - Thaswika Crackers"
 
         lines = [
             f"Dear {order.customer_name},",
-            f"\nThank you for choosing Thaswika Crackers! We have received your order.",
+            f"\nGreat news! Your order #{order.order_number} has been verified and CONFIRMED by Thaswika Crackers Admin.",
+            f"Your crackers are now being packed for dispatch.",
             f"\nOrder Number: #{order.order_number}",
             f"Date: {created_str}",
+            f"Status: CONFIRMED & PACKING",
             f"Grand Total: Rs. {order.total:,.2f}",
             f"Delivery Address:\n{order.address}",
-            f"\nWe will contact you at {order.phone} to confirm dispatch.",
-            f"\nWarm regards,",
-            f"Thaswika Crackers Sivakasi\nPhone: +91 9943349987",
+            f"\n--- ORDER ITEMS ---",
         ]
+        for idx, item in enumerate(items, start=1):
+            lines.append(f"{idx}. [{item.product_code or '-'}] {item.product_name} - Qty: {item.quantity} x Rs. {item.unit_price:,.2f} = Rs. {item.subtotal:,.2f}")
+
+        lines.extend([
+            f"\nTotal Units: {total_qty} units ({len(items)} items)",
+            f"\nWe will contact you at {order.phone} for dispatch details.",
+            f"\nWarm regards,",
+            f"Thaswika Crackers Sivakasi\nPhone / WhatsApp: +91 9943349987",
+        ])
         text_body = "\n".join(lines)
+
+        rows_html = []
+        for idx, item in enumerate(items, start=1):
+            bg = "#FAF6F0" if idx % 2 == 1 else "#FFFFFF"
+            rows_html.append(f"""
+            <tr style="background:{bg};">
+              <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #E5D5C5;font-size:12px;">{idx}</td>
+              <td style="padding:8px 10px;border-bottom:1px solid #E5D5C5;font-size:12px;font-weight:600;color:#2A160D;">{item.product_name}</td>
+              <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #E5D5C5;font-size:12px;font-weight:bold;">{item.quantity}</td>
+              <td style="padding:8px 10px;text-align:right;border-bottom:1px solid #E5D5C5;font-size:12px;">Rs. {item.unit_price:,.2f}</td>
+              <td style="padding:8px 10px;text-align:right;border-bottom:1px solid #E5D5C5;font-size:12px;font-weight:bold;color:#9E2C18;">Rs. {item.subtotal:,.2f}</td>
+            </tr>
+            """)
+        table_rows_str = "".join(rows_html)
 
         html_body = f"""
 <!DOCTYPE html>
 <html>
-<body style="font-family: sans-serif; background-color: #F8F5F0; padding: 20px; color: #2A160D;">
-  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; border: 1px solid #E5D5C5;">
-    <div style="background: #9E2C18; color: #ffffff; padding: 20px 24px;">
-      <h2 style="margin: 0;">🎉 Order Confirmation</h2>
-      <p style="margin: 4px 0 0 0; font-size: 14px;">Thaswika Crackers Sivakasi</p>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F5F0; padding: 20px; color: #2A160D; margin: 0;">
+  <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #E5D5C5; box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+    <div style="background: linear-gradient(135deg, #15803D 0%, #166534 100%); color: #ffffff; padding: 24px 28px;">
+      <h2 style="margin: 0; font-size: 22px;">✅ Order Confirmed & Packing!</h2>
+      <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Thaswika Crackers Sivakasi · Diwali Orders</p>
     </div>
-    <div style="padding: 24px;">
-      <p>Dear <strong>{order.customer_name}</strong>,</p>
-      <p>Thank you for ordering with us! We have received your order <strong>#{order.order_number}</strong> for a total of <strong>Rs. {order.total:,.2f}</strong>.</p>
-      <div style="background: #FCFAF7; border: 1px solid #E5D5C5; border-radius: 8px; padding: 12px 16px; margin: 16px 0;">
-        <p style="margin: 4px 0;"><strong>Order #:</strong> #{order.order_number}</p>
-        <p style="margin: 4px 0;"><strong>Date:</strong> {created_str}</p>
-        <p style="margin: 4px 0;"><strong>Items Count:</strong> {len(items)} items</p>
-        <p style="margin: 4px 0;"><strong>Grand Total:</strong> Rs. {order.total:,.2f}</p>
-        <p style="margin: 4px 0;"><strong>Delivery Address:</strong> {order.address}</p>
+    <div style="padding: 24px 28px;">
+      <p style="font-size: 15px;">Dear <strong>{order.customer_name}</strong>,</p>
+      <p style="font-size: 14px; line-height: 1.6; color: #166534; font-weight: bold;">
+        Great news! Your order has been verified and CONFIRMED by Thaswika Crackers Admin. Your crackers are now being packed for dispatch! 🪔✨
+      </p>
+
+      <div style="background: #FCFAF7; border: 1px solid #E5D5C5; border-radius: 8px; padding: 14px 18px; margin: 18px 0;">
+        <div style="margin: 4px 0; font-size: 13px;"><strong>Order Number:</strong> <span style="color:#9E2C18; font-weight:bold;">#{order.order_number}</span></div>
+        <div style="margin: 4px 0; font-size: 13px;"><strong>Order Date:</strong> {created_str}</div>
+        <div style="margin: 4px 0; font-size: 13px;"><strong>Status:</strong> <span style="background:#DCFCE7; color:#15803D; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:11px;">CONFIRMED</span></div>
+        <div style="margin: 4px 0; font-size: 13px;"><strong>Contact Phone:</strong> {order.phone}</div>
+        <div style="margin: 4px 0; font-size: 13px;"><strong>Delivery Address:</strong> <span style="white-space: pre-wrap;">{order.address}</span></div>
       </div>
-      <p>Your itemized PDF estimate is attached to this email.</p>
-      <p>We will contact you shortly on <strong>{order.phone}</strong> for payment confirmation and dispatch details.</p>
-      <p style="margin-top: 24px; color: #666; font-size: 13px;">Need help? Call or WhatsApp us at <strong>+91 9943349987</strong>.</p>
+
+      <h3 style="margin: 20px 0 8px 0; font-size: 13px; color: #9E2C18; text-transform: uppercase;">Ordered Items ({len(items)})</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; border: 1px solid #E5D5C5;">
+        <thead>
+          <tr style="background: #9E2C18; color: #ffffff; font-size: 11px; text-transform: uppercase;">
+            <th style="padding: 8px 10px; width: 30px;">#</th>
+            <th style="padding: 8px 10px; text-align: left;">Product</th>
+            <th style="padding: 8px 10px; width: 45px; text-align: center;">Qty</th>
+            <th style="padding: 8px 10px; width: 75px; text-align: right;">Rate</th>
+            <th style="padding: 8px 10px; width: 85px; text-align: right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {table_rows_str}
+        </tbody>
+      </table>
+
+      <div style="background: #FAF6F0; border: 2px solid #15803D; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <span style="font-size: 13px; color: #555;">Total Units: <strong>{total_qty} units</strong></span>
+        <span style="font-size: 14px; color: #555;">Grand Total: <strong style="font-size: 18px; color: #15803D; margin-left: 6px;">Rs. {order.total:,.2f}</strong></span>
+      </div>
+
+      <p style="font-size: 13px; color: #444; line-height: 1.5;">
+        📎 Your verified official PDF estimate is attached to this email.<br/>
+        We will contact you shortly on <strong>{order.phone}</strong> with parcel/transport booking details.
+      </p>
+
+      <p style="margin-top: 24px; padding-top: 14px; border-top: 1px solid #E5D5C5; color: #666; font-size: 12px;">
+        Need help or modifications? Call or WhatsApp us at <strong>+91 9943349987</strong>.
+      </p>
+    </div>
+
+    <div style="background: #FAF6F0; padding: 14px 28px; text-align: center; font-size: 11px; color: #777; border-top: 1px solid #E5D5C5;">
+      Thaswika Crackers Sivakasi · Direct Diwali Fireworks Wholesale & Retail
     </div>
   </div>
 </body>
@@ -375,3 +433,4 @@ def send_customer_order_confirmation(order, synchronous=False):
     except Exception as e:
         logger.error(f"Error sending customer confirmation: {e}")
         return False
+

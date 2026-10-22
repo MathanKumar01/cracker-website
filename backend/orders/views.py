@@ -249,8 +249,19 @@ class AdminOrderDetailView(APIView):
         new_status = request.data.get("status")
         if new_status not in dict(Order.STATUS):
             return Response({"detail": "Invalid status."}, status=status.HTTP_400_BAD_REQUEST)
+        
         order.status = new_status
         order.save(update_fields=["status"])
+
+        # Automatically trigger confirmation email to customer when order is confirmed
+        if str(new_status).lower() == "confirmed":
+            try:
+                from .email_notifications import send_customer_order_confirmation
+                send_customer_order_confirmation(order)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to dispatch customer confirmation email: {e}")
+
         return Response(OrderSerializer(order).data)
 
     def delete(self, request, pk):
