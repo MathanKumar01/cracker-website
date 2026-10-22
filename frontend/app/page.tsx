@@ -14,13 +14,22 @@ export default function Home() {
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [token, setToken] = useState<string>("");
   const [customerUser, setCustomerUser] = useState<string>("");
 
+  // In-drawer quick auth state
+  const [authTab, setAuthTab] = useState<"login" | "register">("login");
+  const [authUsername, setAuthUsername] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
   useEffect(() => {
-    const user = localStorage.getItem("kathiravan_username") || localStorage.getItem("sakthi_username") || "";
-    if (user) {
-      setCustomerUser(user);
-    }
+    const savedToken = localStorage.getItem("kathiravan_token") || localStorage.getItem("sakthi_token") || "";
+    const savedUser = localStorage.getItem("kathiravan_username") || localStorage.getItem("sakthi_username") || "";
+    if (savedToken) setToken(savedToken);
+    if (savedUser) setCustomerUser(savedUser);
   }, []);
 
   const categories = ["All", ...Array.from(new Set(products.map((p) => p.category)))];
@@ -59,10 +68,66 @@ export default function Home() {
     });
   }
 
+  async function handleQuickAuth(e: React.FormEvent) {
+    e.preventDefault();
+    if (!authUsername.trim() || !authPassword) {
+      setAuthError("Please fill in username and password.");
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const apiUrl = getApiUrl();
+      const endpoint = authTab === "register" ? "/auth/register/" : "/auth/login/";
+      const payload: Record<string, string> = { username: authUsername.trim(), password: authPassword };
+      if (authTab === "register" && authEmail.trim()) {
+        payload.email = authEmail.trim();
+      }
+
+      const res = await fetch(`${apiUrl}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || "Authentication failed.");
+      }
+
+      localStorage.setItem("kathiravan_token", data.token);
+      localStorage.setItem("kathiravan_username", data.username);
+      localStorage.setItem("sakthi_token", data.token);
+      localStorage.setItem("sakthi_username", data.username);
+      setToken(data.token);
+      setCustomerUser(data.username);
+      setAuthPassword("");
+      setAuthError("");
+      setNotice({
+        type: "success",
+        message: `Welcome, ${data.username}! You are now signed in. You can now confirm your order below.`,
+      });
+    } catch (err) {
+      setAuthError(getApiErrorMessage(err));
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
   async function submitOrder(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!lines.length) {
       setNotice({ type: "error", message: "Please add at least one product to your order." });
+      return;
+    }
+
+    const currentToken = token || localStorage.getItem("kathiravan_token") || localStorage.getItem("sakthi_token");
+    if (!currentToken) {
+      setNotice({
+        type: "error",
+        message: "You must be signed in to place an order. Please sign in or create an account first.",
+      });
       return;
     }
 
@@ -87,14 +152,10 @@ export default function Home() {
 
     try {
       const apiUrl = getApiUrl();
-      const token = localStorage.getItem("kathiravan_token") || localStorage.getItem("sakthi_token");
-
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
+        "Authorization": `Token ${currentToken}`,
       };
-      if (token) {
-        headers["Authorization"] = `Token ${token}`;
-      }
 
       const res = await fetch(`${apiUrl}/orders/`, {
         method: "POST",
@@ -117,7 +178,7 @@ export default function Home() {
       const data = await res.json();
       setNotice({
         type: "success",
-        message: `Order #${data.order_number} confirmed! Total: ${money(data.total)}. We will contact you at ${payload.phone} shortly.`,
+        message: `🎉 Order #${data.order_number} confirmed! Total: ${money(data.total)}. Your order details have been saved to your profile. Store admin will review and confirm your order shortly.`,
       });
       setCart({});
       form.reset();
@@ -385,69 +446,190 @@ export default function Home() {
                   })}
                 </div>
 
+                {/* Grand Total */}
                 <div className="mt-4 flex justify-between border-t border-orange-200 pt-3 text-xl font-black text-stone-900">
                   <span>Grand Total</span>
                   <span className="text-[#a52b18]">{money(total)}</span>
                 </div>
 
-                {/* Checkout Form */}
-                <form onSubmit={submitOrder} className="mt-4 space-y-3">
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#b8471c]">
-                    Customer & Delivery Details
-                  </h3>
+                {/* Checkout Section: Must Be Logged In */}
+                {!token ? (
+                  <div className="mt-5 rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-stone-900 font-black text-base">
+                      <span className="text-xl">🔒</span> Sign In Required to Order
+                    </div>
+                    <p className="mt-1 text-xs text-stone-600 leading-relaxed">
+                      You must sign in to place your order. Your ordered items will be saved directly in your customer profile so you can track when admin confirms your order.
+                    </p>
 
-                  <input
-                    required
-                    name="name"
-                    placeholder="Full Name *"
-                    className="w-full rounded-xl border border-orange-200 bg-white p-3 text-sm text-stone-900 outline-none focus:border-[#a52b18]"
-                  />
-                  <input
-                    required
-                    name="phone"
-                    type="tel"
-                    pattern="[0-9+() -]{7,18}"
-                    placeholder="Mobile Number (e.g. 9876543210) *"
-                    className="w-full rounded-xl border border-orange-200 bg-white p-3 text-sm text-stone-900 outline-none focus:border-[#a52b18]"
-                  />
-                  <textarea
-                    required
-                    name="address"
-                    placeholder="Delivery Address / City / Pincode *"
-                    rows={2}
-                    className="w-full rounded-xl border border-orange-200 bg-white p-3 text-sm text-stone-900 outline-none focus:border-[#a52b18]"
-                  />
-                  <textarea
-                    name="notes"
-                    placeholder="Special requests or packing notes (optional)"
-                    rows={1}
-                    className="w-full rounded-xl border border-orange-200 bg-white p-3 text-sm text-stone-900 outline-none focus:border-[#a52b18]"
-                  />
+                    {/* Quick In-Cart Tab Switcher */}
+                    <div className="mt-4 flex rounded-xl bg-white p-1 border border-orange-200">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab("login");
+                          setAuthError("");
+                        }}
+                        className={`flex-1 rounded-lg py-2 text-xs font-black transition ${
+                          authTab === "login"
+                            ? "bg-[#a52b18] text-white shadow-sm"
+                            : "text-stone-600 hover:text-stone-900"
+                        }`}
+                      >
+                        Sign In
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab("register");
+                          setAuthError("");
+                        }}
+                        className={`flex-1 rounded-lg py-2 text-xs font-black transition ${
+                          authTab === "register"
+                            ? "bg-[#a52b18] text-white shadow-sm"
+                            : "text-stone-600 hover:text-stone-900"
+                        }`}
+                      >
+                        Create Account
+                      </button>
+                    </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full rounded-2xl bg-[#a52b18] p-4 text-base font-black text-white shadow-lg hover:bg-[#8e2414] transition disabled:opacity-50"
-                  >
-                    {isSubmitting ? "Placing Order..." : `Confirm Order · ${money(total)}`}
-                  </button>
+                    <form onSubmit={handleQuickAuth} className="mt-3.5 space-y-2.5">
+                      <input
+                        required
+                        value={authUsername}
+                        onChange={(e) => setAuthUsername(e.target.value)}
+                        placeholder="Username"
+                        className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-stone-900 outline-none focus:border-[#a52b18]"
+                      />
+                      {authTab === "register" && (
+                        <input
+                          type="email"
+                          value={authEmail}
+                          onChange={(e) => setAuthEmail(e.target.value)}
+                          placeholder="Email (optional)"
+                          className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-stone-900 outline-none focus:border-[#a52b18]"
+                        />
+                      )}
+                      <input
+                        required
+                        type="password"
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        placeholder="Password (8+ chars)"
+                        className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-stone-900 outline-none focus:border-[#a52b18]"
+                      />
+                      <button
+                        type="submit"
+                        disabled={authLoading}
+                        className="w-full rounded-xl bg-[#2a160d] p-3 text-xs font-black text-[#ffe7b0] hover:bg-[#3d2013] transition disabled:opacity-50"
+                      >
+                        {authLoading ? "Authenticating..." : authTab === "login" ? "Sign In & Continue →" : "Create Account & Continue →"}
+                      </button>
+                    </form>
 
-                  <p className="text-[11px] leading-4 text-stone-500 text-center">
-                    Payment is handled upon confirmation via GPay / Cash on Delivery. Orders are verified by phone.
-                  </p>
-                </form>
+                    {authError && (
+                      <div className="mt-2.5 rounded-xl bg-red-100 border border-red-200 p-2.5 text-[11px] font-bold text-red-800">
+                        ⚠️ {authError}
+                      </div>
+                    )}
+
+                    <div className="mt-3 text-center">
+                      <a href="/account" className="text-xs font-bold text-[#a52b18] hover:underline">
+                        Or open full Account Page →
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={submitOrder} className="mt-4 space-y-3">
+                    <div className="flex items-center justify-between rounded-2xl bg-orange-100/70 p-3 border border-orange-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">👤</span>
+                        <div>
+                          <p className="text-xs font-black text-stone-900">
+                            Signed in as <span className="text-[#a52b18]">@{customerUser}</span>
+                          </p>
+                          <p className="text-[10px] text-stone-600 font-semibold">Orders will be saved to your profile</p>
+                        </div>
+                      </div>
+                      <a
+                        href="/account"
+                        className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-[#a52b18] border border-orange-200 hover:bg-orange-50"
+                      >
+                        My Profile →
+                      </a>
+                    </div>
+
+                    <h3 className="text-xs font-black uppercase tracking-wider text-[#b8471c] pt-1">
+                      Delivery & Contact Details
+                    </h3>
+
+                    <input
+                      required
+                      name="name"
+                      placeholder="Full Name *"
+                      className="w-full rounded-xl border border-orange-200 bg-white p-3 text-sm text-stone-900 outline-none focus:border-[#a52b18]"
+                    />
+                    <input
+                      required
+                      name="phone"
+                      type="tel"
+                      pattern="[0-9+() -]{7,18}"
+                      placeholder="Mobile Number (e.g. 9876543210) *"
+                      className="w-full rounded-xl border border-orange-200 bg-white p-3 text-sm text-stone-900 outline-none focus:border-[#a52b18]"
+                    />
+                    <textarea
+                      required
+                      name="address"
+                      placeholder="Delivery Address / City / Pincode *"
+                      rows={2}
+                      className="w-full rounded-xl border border-orange-200 bg-white p-3 text-sm text-stone-900 outline-none focus:border-[#a52b18]"
+                    />
+                    <textarea
+                      name="notes"
+                      placeholder="Special requests or packing notes (optional)"
+                      rows={1}
+                      className="w-full rounded-xl border border-orange-200 bg-white p-3 text-sm text-stone-900 outline-none focus:border-[#a52b18]"
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full rounded-2xl bg-[#a52b18] p-4 text-base font-black text-white shadow-lg hover:bg-[#8e2414] transition disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Placing Order..." : `Confirm Order · ${money(total)}`}
+                    </button>
+
+                    <p className="text-[11px] leading-4 text-stone-500 text-center">
+                      Payment is handled upon confirmation via GPay / Cash on Delivery. Orders are verified by phone.
+                    </p>
+                  </form>
+                )}
               </>
             )}
 
             {notice && (
               <div
-                className={`mt-4 rounded-2xl p-4 text-xs font-semibold ${notice.type === "success"
+                className={`mt-4 rounded-2xl p-4 text-xs font-semibold ${
+                  notice.type === "success"
                     ? "bg-emerald-50 border border-emerald-200 text-emerald-900"
                     : "bg-red-50 border border-red-200 text-red-900"
-                  }`}
+                }`}
               >
-                {notice.type === "success" ? "🎉 " : "⚠️ "}
-                {notice.message}
+                <div>
+                  {notice.type === "success" ? "🎉 " : "⚠️ "}
+                  {notice.message}
+                </div>
+                {notice.type === "success" && (
+                  <div className="mt-3">
+                    <a
+                      href="/account"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-3.5 py-2 text-xs font-black text-white shadow-sm hover:bg-emerald-800 transition"
+                    >
+                      👤 View Order & Status in Your Profile →
+                    </a>
+                  </div>
+                )}
               </div>
             )}
           </aside>

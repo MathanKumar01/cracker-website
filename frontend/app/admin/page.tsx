@@ -23,6 +23,8 @@ type Order = {
   status: string;
   created_at: string;
   items: OrderItem[];
+  username?: string;
+  user_email?: string;
 };
 
 const money = (n: number) => "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
@@ -34,7 +36,7 @@ export default function AdminPage() {
   const [token, setToken] = useState("");
   const [verifiedUsername, setVerifiedUsername] = useState("");
 
-  // Input states for login forms (typing does NOT trigger authentication):
+  // Input states for login forms:
   const [inputKey, setInputKey] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -43,6 +45,8 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -87,7 +91,7 @@ export default function AdminPage() {
     }
   }, [adminKey, token]);
 
-  // Sign in with Admin API Key (triggered on button click or Enter key)
+  // Sign in with Admin API Key
   async function loginWithApiKey(e?: React.FormEvent) {
     if (e) e.preventDefault();
     const keyToVerify = inputKey.trim();
@@ -111,7 +115,6 @@ export default function AdminPage() {
         throw new Error(data.detail || "Invalid Admin API Key.");
       }
 
-      // Key verified successfully: store and transition to dashboard
       localStorage.setItem("kathiravan_admin_key", keyToVerify);
       localStorage.setItem("sakthi_admin_key", keyToVerify);
       setAdminKey(keyToVerify);
@@ -187,7 +190,7 @@ export default function AdminPage() {
     }
   }
 
-  // Update order status
+  // Update order status (e.g. Confirmed, Packed, etc.)
   async function updateStatus(id: number, newStatus: string) {
     try {
       const res = await fetch(`${API}/admin/orders/${id}/`, {
@@ -200,6 +203,8 @@ export default function AdminPage() {
       }
       const updated = await res.json();
       setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: updated.status } : o)));
+      setSuccessMsg(`Order #${updated.order_number} status updated to "${updated.status.toUpperCase()}"!`);
+      setTimeout(() => setSuccessMsg(""), 3500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Status update failed.");
     }
@@ -219,22 +224,86 @@ export default function AdminPage() {
         throw new Error(`Failed to delete order (HTTP ${res.status}).`);
       }
       setOrders((prev) => prev.filter((o) => o.id !== order.id));
+      setSuccessMsg(`Order #${order.order_number} deleted successfully.`);
+      setTimeout(() => setSuccessMsg(""), 3500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed.");
     }
   }
 
-  // Export CSV download
+  // Download Excel (.xlsx) with ALL orders
+  async function downloadExcel() {
+    setExportingExcel(true);
+    setError("");
+    try {
+      const headers = getAuthHeaders();
+      const res = await fetch(`${API}/admin/orders/export-excel/`, { headers });
+      if (!res.ok) {
+        throw new Error(`Excel export failed (HTTP ${res.status}).`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `thaswika-crackers-all-orders-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setSuccessMsg("Master Excel workbook (.xlsx) with all orders downloaded successfully!");
+      setTimeout(() => setSuccessMsg(""), 4000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Excel export failed.");
+    } finally {
+      setExportingExcel(false);
+    }
+  }
+
+  // Download PDF for individual order of one user
+  async function downloadOrderPdf(order: Order, inline = false) {
+    setDownloadingPdfId(order.id);
+    setError("");
+    try {
+      const headers = getAuthHeaders();
+      const endpoint = `${API}/admin/orders/${order.id}/pdf/${inline ? "?view=1" : ""}`;
+      const res = await fetch(endpoint, { headers });
+      if (!res.ok) {
+        throw new Error(`PDF generation failed (HTTP ${res.status}).`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      if (inline) {
+        window.open(url, "_blank");
+      } else {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Order-${order.order_number}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "PDF download failed.");
+    } finally {
+      setDownloadingPdfId(null);
+    }
+  }
+
+  // Export CSV download fallback
   function downloadCsv() {
     const csvRows = [
-      ["Order #", "Date", "Customer Name", "Phone", "Address", "Notes", "Products", "Total (Rs)", "Status"],
+      ["Order #", "Date", "Customer Username", "Customer Name", "Phone", "Address", "Notes", "Total Items Qty", "Products", "Total (Rs)", "Status"],
       ...orders.map((o) => [
         o.order_number,
         o.created_at,
+        o.username || "Guest",
         o.customer_name,
         o.phone,
         o.address,
         o.notes || "",
+        o.items.reduce((s, i) => s + i.quantity, 0),
         o.items.map((i) => `${i.product_name} x ${i.quantity}`).join("; "),
         o.total,
         o.status,
@@ -282,6 +351,7 @@ export default function AdminPage() {
         !q ||
         o.order_number.toLowerCase().includes(q) ||
         o.customer_name.toLowerCase().includes(q) ||
+        (o.username && o.username.toLowerCase().includes(q)) ||
         o.phone.toLowerCase().includes(q) ||
         o.address.toLowerCase().includes(q);
       return matchesStatus && matchesSearch;
@@ -291,6 +361,7 @@ export default function AdminPage() {
   // Statistics
   const totalRevenue = useMemo(() => orders.reduce((s, o) => s + Number(o.total || 0), 0), [orders]);
   const newOrdersCount = useMemo(() => orders.filter((o) => o.status === "new").length, [orders]);
+  const confirmedCount = useMemo(() => orders.filter((o) => o.status === "confirmed").length, [orders]);
 
   // LOGIN SCREEN (renders when not authenticated)
   if (!isAuthenticated) {
@@ -308,7 +379,7 @@ export default function AdminPage() {
 
           <h1 className="mt-6 text-3xl font-black text-stone-900">Thaswika Admin</h1>
           <p className="mt-1 text-sm text-stone-600">
-            Authenticate to view orders, update packing status, and export sales CSV.
+            Authenticate to review customer orders, confirm orders, export Excel, and generate PDF invoices.
           </p>
 
           {/* Tab Switcher */}
@@ -319,10 +390,11 @@ export default function AdminPage() {
                 setAuthMethod("api_key");
                 setError("");
               }}
-              className={`flex-1 rounded-lg py-2 text-xs font-extrabold transition ${authMethod === "api_key"
+              className={`flex-1 rounded-lg py-2 text-xs font-extrabold transition ${
+                authMethod === "api_key"
                   ? "bg-white text-[#a52b18] shadow-sm"
                   : "text-stone-600 hover:text-stone-900"
-                }`}
+              }`}
             >
               🔑 Admin API Key
             </button>
@@ -332,10 +404,11 @@ export default function AdminPage() {
                 setAuthMethod("credentials");
                 setError("");
               }}
-              className={`flex-1 rounded-lg py-2 text-xs font-extrabold transition ${authMethod === "credentials"
+              className={`flex-1 rounded-lg py-2 text-xs font-extrabold transition ${
+                authMethod === "credentials"
                   ? "bg-white text-[#a52b18] shadow-sm"
                   : "text-stone-600 hover:text-stone-900"
-                }`}
+              }`}
             >
               👤 Staff Username
             </button>
@@ -357,7 +430,7 @@ export default function AdminPage() {
                   autoFocus
                 />
                 <p className="mt-1.5 text-xs text-stone-500">
-                  Configured in your backend <code className="font-mono bg-stone-100 px-1 py-0.5 rounded">.env</code> as <code className="font-mono text-[#a52b18]">ADMIN_API_KEY</code>.
+                  Configured in backend <code className="font-mono bg-stone-100 px-1 py-0.5 rounded">.env</code> as <code className="font-mono text-[#a52b18]">ADMIN_API_KEY</code>.
                 </p>
               </div>
               <button
@@ -439,24 +512,38 @@ export default function AdminPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={loadOrders}
               disabled={loading}
-              className="rounded-xl border border-orange-200 bg-white px-4 py-2 text-xs font-bold text-stone-700 hover:bg-orange-50 disabled:opacity-50"
+              className="rounded-xl border border-orange-200 bg-white px-3.5 py-2 text-xs font-bold text-stone-700 hover:bg-orange-50 disabled:opacity-50 shadow-sm"
             >
               🔄 {loading ? "Refreshing..." : "Refresh"}
             </button>
+
+            {/* DOWNLOAD EXCEL WITH ALL ORDERS */}
+            <button
+              onClick={downloadExcel}
+              disabled={exportingExcel || !orders.length}
+              className="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-black text-white shadow-sm hover:bg-emerald-800 disabled:opacity-40 flex items-center gap-1.5 transition"
+              title="Download Microsoft Excel spreadsheet (.xlsx) containing all orders"
+            >
+              <span>📊</span>
+              <span>{exportingExcel ? "Generating Excel..." : `Download Excel (.xlsx)`}</span>
+            </button>
+
+            {/* CSV Export Option */}
             <button
               onClick={downloadCsv}
               disabled={!orders.length}
-              className="rounded-xl bg-[#2a160d] px-4 py-2 text-xs font-extrabold text-[#ffe7b0] shadow-sm hover:bg-[#3d2013] disabled:opacity-40"
+              className="rounded-xl bg-[#2a160d] px-3.5 py-2 text-xs font-extrabold text-[#ffe7b0] shadow-sm hover:bg-[#3d2013] disabled:opacity-40"
             >
-              📥 Download CSV ({orders.length})
+              📥 CSV ({orders.length})
             </button>
+
             <button
               onClick={logout}
-              className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 hover:bg-red-100"
+              className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-700 hover:bg-red-100"
             >
               Sign Out
             </button>
@@ -480,12 +567,12 @@ export default function AdminPage() {
             <p className="mt-1 text-2xl font-black text-amber-600">{newOrdersCount}</p>
           </div>
           <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Total Sales Value</p>
-            <p className="mt-1 text-2xl font-black text-[#a52b18]">{money(totalRevenue)}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Confirmed Orders</p>
+            <p className="mt-1 text-2xl font-black text-emerald-700">{confirmedCount}</p>
           </div>
           <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Backend API</p>
-            <p className="mt-1 text-xs font-bold text-stone-600 truncate">{API}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Total Sales Value</p>
+            <p className="mt-1 text-2xl font-black text-[#a52b18]">{money(totalRevenue)}</p>
           </div>
         </div>
 
@@ -508,10 +595,11 @@ export default function AdminPage() {
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
-                className={`rounded-full px-4 py-1.5 text-xs font-extrabold capitalize transition ${statusFilter === s
+                className={`rounded-full px-4 py-1.5 text-xs font-extrabold capitalize transition ${
+                  statusFilter === s
                     ? "bg-[#a52b18] text-white shadow-sm"
                     : "border border-orange-200 bg-white text-stone-700 hover:border-orange-400"
-                  }`}
+                }`}
               >
                 {s}
               </button>
@@ -521,94 +609,145 @@ export default function AdminPage() {
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search orders, phone, customer..."
-            className="w-full sm:w-72 rounded-xl border border-orange-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-[#a52b18]"
+            placeholder="Search orders, username, phone, customer..."
+            className="w-full sm:w-80 rounded-xl border border-orange-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-[#a52b18]"
           />
         </div>
 
         {/* Orders List */}
         <div className="mt-6 grid gap-4">
-          {filteredOrders.map((o) => (
-            <article
-              key={o.id}
-              className="rounded-3xl border border-orange-100 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md transition"
-            >
-              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <span className="rounded-lg bg-orange-100 px-2.5 py-1 text-xs font-black uppercase tracking-wider text-[#a52b18]">
-                      {o.order_number}
-                    </span>
-                    <span className="text-xs text-stone-500">
-                      {new Date(o.created_at).toLocaleString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-
-                  <h2 className="mt-2 text-xl font-black text-stone-900">{o.customer_name}</h2>
-                  <p className="mt-1 text-sm font-bold text-stone-700 flex items-center gap-2">
-                    📞 <a href={`tel:${o.phone}`} className="hover:underline">{o.phone}</a>
-                  </p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-stone-600 bg-[#fffaf5] p-3 rounded-xl border border-orange-100/60">
-                    📍 {o.address}
-                  </p>
-                  {o.notes && (
-                    <p className="mt-2 text-xs italic text-stone-500">
-                      📝 Customer note: {o.notes}
-                    </p>
-                  )}
-                </div>
-
-                <div className="sm:text-right shrink-0 flex flex-col sm:items-end">
-                  <p className="text-3xl font-black text-[#a52b18]">{money(o.total)}</p>
-
-                  <div className="mt-3 flex items-center gap-2">
-                    <label className="text-xs font-bold text-stone-600">Status:</label>
-                    <select
-                      value={o.status}
-                      onChange={(e) => updateStatus(o.id, e.target.value)}
-                      className="rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm font-bold text-stone-800 shadow-sm outline-none focus:border-[#a52b18]"
-                    >
-                      <option value="new">🆕 New</option>
-                      <option value="confirmed">✅ Confirmed</option>
-                      <option value="packed">📦 Packed</option>
-                      <option value="completed">🎉 Completed</option>
-                      <option value="cancelled">❌ Cancelled</option>
-                    </select>
-                  </div>
-
-                  <button
-                    onClick={() => deleteOrder(o)}
-                    className="mt-3 text-xs font-bold text-red-600 hover:text-red-800 hover:underline"
-                  >
-                    🗑️ Delete Order
-                  </button>
-                </div>
-              </div>
-
-              {/* Items Table */}
-              <div className="mt-5 border-t border-orange-100 pt-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">
-                  Order Items ({o.items?.length || 0})
-                </p>
-                <div className="divide-y divide-orange-50 bg-[#fffdfa] rounded-xl border border-orange-100 p-2 sm:p-3">
-                  {o.items?.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-2 text-sm">
-                      <span className="font-medium text-stone-800">
-                        {item.product_name} <span className="font-bold text-[#b8471c]">× {item.quantity}</span>
+          {filteredOrders.map((o) => {
+            const isConfirmed = o.status.toLowerCase() === "confirmed";
+            return (
+              <article
+                key={o.id}
+                className="rounded-3xl border border-orange-100 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md transition"
+              >
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="rounded-lg bg-orange-100 px-2.5 py-1 text-xs font-black uppercase tracking-wider text-[#a52b18]">
+                        {o.order_number}
                       </span>
-                      <span className="font-bold text-stone-900">{money(item.subtotal)}</span>
+                      {o.username && (
+                        <span className="rounded-lg bg-amber-100/70 border border-amber-200 px-2 py-0.5 text-xs font-bold text-amber-900">
+                          👤 @{o.username}
+                        </span>
+                      )}
+                      <span className="text-xs text-stone-500">
+                        {new Date(o.created_at).toLocaleString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
-                  ))}
+
+                    <h2 className="mt-2 text-xl font-black text-stone-900">{o.customer_name}</h2>
+                    <p className="mt-1 text-sm font-bold text-stone-700 flex items-center gap-2">
+                      📞 <a href={`tel:${o.phone}`} className="hover:underline">{o.phone}</a>
+                    </p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-stone-600 bg-[#fffaf5] p-3 rounded-xl border border-orange-100/60">
+                      📍 {o.address}
+                    </p>
+                    {o.notes && (
+                      <p className="mt-2 text-xs italic text-stone-500">
+                        📝 Customer note: {o.notes}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="sm:text-right shrink-0 flex flex-col sm:items-end">
+                    <p className="text-3xl font-black text-[#a52b18]">{money(o.total)}</p>
+
+                    {/* CONFIRM ORDER ONE-CLICK BUTTON & STATUS SELECTOR */}
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {!isConfirmed && o.status !== "completed" && (
+                        <button
+                          onClick={() => updateStatus(o.id, "confirmed")}
+                          className="rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-black text-white hover:bg-emerald-700 shadow-sm transition flex items-center gap-1"
+                        >
+                          <span>✅</span>
+                          <span>Confirm Order</span>
+                        </button>
+                      )}
+
+                      {isConfirmed && (
+                        <span className="rounded-xl bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                          <span>✅</span>
+                          <span>Confirmed</span>
+                        </span>
+                      )}
+
+                      <select
+                        value={o.status}
+                        onChange={(e) => updateStatus(o.id, e.target.value)}
+                        className="rounded-xl border border-orange-200 bg-white px-2.5 py-1.5 text-xs font-bold text-stone-800 shadow-sm outline-none focus:border-[#a52b18]"
+                      >
+                        <option value="new">🆕 New</option>
+                        <option value="confirmed">✅ Confirmed</option>
+                        <option value="packed">📦 Packed</option>
+                        <option value="completed">🎉 Completed</option>
+                        <option value="cancelled">❌ Cancelled</option>
+                      </select>
+                    </div>
+
+                    {/* PDF FORMAT OF EACH USER'S ORDER */}
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => downloadOrderPdf(o, false)}
+                        disabled={downloadingPdfId === o.id}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50/50 px-3 py-1.5 text-xs font-bold text-[#a52b18] hover:bg-orange-100 transition shadow-sm disabled:opacity-50"
+                        title="Download printable PDF order invoice"
+                      >
+                        <span>📄</span>
+                        <span>{downloadingPdfId === o.id ? "Generating PDF..." : "Order PDF"}</span>
+                      </button>
+
+                      <button
+                        onClick={() => downloadOrderPdf(o, true)}
+                        className="inline-flex items-center gap-1 rounded-xl border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-bold text-stone-700 hover:bg-stone-50 transition shadow-sm"
+                        title="View / Print PDF in new tab"
+                      >
+                        <span>🖨️</span>
+                        <span>Print</span>
+                      </button>
+
+                      <button
+                        onClick={() => deleteOrder(o)}
+                        className="text-xs font-bold text-red-600 hover:text-red-800 hover:underline ml-1"
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+
+                {/* Items Table */}
+                <div className="mt-5 border-t border-orange-100 pt-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">
+                    Order Items ({o.items?.length || 0}) · Total Units: {o.items?.reduce((s, i) => s + i.quantity, 0)}
+                  </p>
+                  <div className="divide-y divide-orange-50 bg-[#fffdfa] rounded-xl border border-orange-100 p-2 sm:p-3">
+                    {o.items?.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between py-2 text-sm">
+                        <span className="font-medium text-stone-800">
+                          {item.product_name}{" "}
+                          {item.product_code && (
+                            <span className="text-xs font-mono text-stone-400">[{item.product_code}]</span>
+                          )}{" "}
+                          <span className="font-bold text-[#b8471c]">× {item.quantity}</span>
+                        </span>
+                        <span className="font-bold text-stone-900">{money(item.subtotal)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
 
           {!loading && filteredOrders.length === 0 && (
             <div className="rounded-3xl border border-dashed border-orange-200 bg-white p-12 text-center text-stone-500">

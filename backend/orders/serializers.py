@@ -8,9 +8,24 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ["product_code","product_name","quantity","unit_price","subtotal"]
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True, default="")
+    user_email = serializers.CharField(source="user.email", read_only=True, default="")
     class Meta:
         model = Order
-        fields = ["id","order_number","customer_name","phone","address","notes","total","status","created_at","items"]
+        fields = [
+            "id",
+            "order_number",
+            "customer_name",
+            "phone",
+            "address",
+            "notes",
+            "total",
+            "status",
+            "created_at",
+            "items",
+            "username",
+            "user_email",
+        ]
 class CreateOrderSerializer(serializers.Serializer):
     customer_name = serializers.CharField(max_length=120)
     phone = serializers.CharField(max_length=30)

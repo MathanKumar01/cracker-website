@@ -131,22 +131,28 @@ class CurrentUserView(APIView):
 
 class CreateOrderView(APIView):
     """
-    Allows placing orders for both authenticated customers and guest customers.
+    Requires customers to be logged in to place an order.
+    Saves the ordered items under their account profile.
     """
     authentication_classes = [TokenAuthentication]
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        if not request.user or not request.user.is_authenticated:
+            return Response(
+                {"detail": "Please log in or create an account to place an order."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         serializer = CreateOrderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = request.user if (request.user and request.user.is_authenticated) else None
-        order = serializer.save(user=user)
+        order = serializer.save(user=request.user)
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
 
 class CustomerOrdersView(APIView):
     """
     Returns orders placed by the currently logged-in customer.
+    Shows the ordered details and real-time status (including admin confirmation).
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -154,6 +160,28 @@ class CustomerOrdersView(APIView):
     def get(self, request):
         orders = Order.objects.filter(user=request.user).prefetch_related("items").order_by("-created_at")
         return Response(OrderSerializer(orders, many=True).data)
+
+
+class CustomerOrderPdfView(APIView):
+    """
+    Allows a customer to download the PDF invoice for their own order.
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            order = Order.objects.prefetch_related("items").select_related("user").get(pk=pk, user=request.user)
+        except Order.DoesNotExist:
+            return Response({"detail": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        from .pdf_generator import generate_order_pdf
+        pdf_bytes = generate_order_pdf(order)
+
+        disposition = "inline" if request.query_params.get("view") == "1" else "attachment"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'{disposition}; filename="Order-{order.order_number}.pdf"'
+        return response
 
 
 class AdminOrdersView(APIView):
@@ -164,20 +192,21 @@ class AdminOrdersView(APIView):
     permission_classes = [IsAdminOrHasApiKey]
 
     def get(self, request):
-        orders = Order.objects.prefetch_related("items").order_by("-created_at")
+        orders = Order.objects.prefetch_related("items").select_related("user").order_by("-created_at")
         return Response(OrderSerializer(orders, many=True).data)
 
 
 class AdminOrderDetailView(APIView):
     """
     View/update/delete an order. Accessible by staff users or holders of the ADMIN_API_KEY.
+    Admin confirming an order updates status to 'confirmed'.
     """
     authentication_classes = [TokenAuthentication, AdminApiKeyAuthentication]
     permission_classes = [IsAdminOrHasApiKey]
 
     def get_order(self, pk):
         try:
-            return Order.objects.get(pk=pk)
+            return Order.objects.prefetch_related("items").select_related("user").get(pk=pk)
         except Order.DoesNotExist:
             return None
 
@@ -206,6 +235,49 @@ class AdminOrderDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class AdminOrderPdfView(APIView):
+    """
+    Generates and returns an individual user's order in PDF format for the admin.
+    Supports inline view (for print/preview) or direct file attachment download.
+    """
+    authentication_classes = [TokenAuthentication, AdminApiKeyAuthentication]
+    permission_classes = [IsAdminOrHasApiKey]
+
+    def get(self, request, pk):
+        try:
+            order = Order.objects.prefetch_related("items").select_related("user").get(pk=pk)
+        except Order.DoesNotExist:
+            return Response({"detail": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        from .pdf_generator import generate_order_pdf
+        pdf_bytes = generate_order_pdf(order)
+
+        disposition = "inline" if request.query_params.get("view") == "1" else "attachment"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'{disposition}; filename="Order-{order.order_number}.pdf"'
+        return response
+
+
+class ExportOrdersExcelView(APIView):
+    """
+    Exports ALL orders into an Excel (.xlsx) workbook with full details and itemized breakdown.
+    """
+    authentication_classes = [TokenAuthentication, AdminApiKeyAuthentication]
+    permission_classes = [IsAdminOrHasApiKey]
+
+    def get(self, request):
+        from .excel_generator import generate_all_orders_excel
+        orders_qs = Order.objects.prefetch_related("items").select_related("user").order_by("-created_at")
+        excel_bytes = generate_all_orders_excel(orders_qs)
+
+        response = HttpResponse(
+            excel_bytes,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = 'attachment; filename="thaswika-crackers-all-orders.xlsx"'
+        return response
+
+
 class ExportOrdersView(APIView):
     """
     Exports all orders into an Excel-compatible CSV file.
@@ -218,19 +290,39 @@ class ExportOrdersView(APIView):
         response["Content-Disposition"] = 'attachment; filename="thaswika-orders.csv"'
         response.write("\ufeff")  # UTF-8 BOM for Microsoft Excel
         writer = csv.writer(response)
-        writer.writerow(["Order #", "Date", "Customer Name", "Phone", "Address", "Notes", "Products", "Total (Rs)", "Status"])
-        for o in Order.objects.prefetch_related("items").order_by("-created_at"):
-            items_str = "; ".join(f"{i.product_name} x {i.quantity}" for i in o.items.all())
+        writer.writerow([
+            "Order #",
+            "Date",
+            "Customer Username",
+            "Customer Name",
+            "Phone",
+            "Address",
+            "Notes",
+            "Total Items Qty",
+            "Products Breakdown",
+            "Total (Rs)",
+            "Status",
+            "Admin Confirmed",
+        ])
+        for o in Order.objects.prefetch_related("items").select_related("user").order_by("-created_at"):
+            items = list(o.items.all())
+            items_str = "; ".join(f"{i.product_name} x {i.quantity}" for i in items)
+            order_qty = sum(i.quantity for i in items)
+            is_confirmed = "YES" if o.status == "confirmed" else ("COMPLETED" if o.status == "completed" else "NO")
+            username_val = o.user.username if o.user else "Guest"
             writer.writerow([
                 o.order_number,
-                o.created_at.strftime("%Y-%m-%d %H:%M"),
+                o.created_at.strftime("%Y-%m-%d %H:%M") if o.created_at else "",
+                username_val,
                 o.customer_name,
                 o.phone,
                 o.address,
                 o.notes,
+                order_qty,
                 items_str,
                 o.total,
-                o.status
+                o.status,
+                is_confirmed,
             ])
         return response
 
@@ -244,4 +336,5 @@ def health(request):
         "service": "Thaswika Crackers API",
         "database": "connected"
     })
+
 
