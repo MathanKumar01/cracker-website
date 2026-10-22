@@ -1,17 +1,77 @@
+import base64
+import json
 import logging
 import threading
+import urllib.error
+import urllib.request
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
 logger = logging.getLogger(__name__)
 
 
+def _send_via_brevo_api(subject, text_body, html_body, to_list, from_email, attachment=None):
+    """
+    Sends an email via Brevo REST API v3 over standard HTTPS (Port 443).
+    Bypasses cloud provider SMTP firewall blocks (e.g. Render Free plan).
+    """
+    brevo_key = getattr(settings, "BREVO_API_KEY", "").strip()
+    if not brevo_key:
+        return False
+
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "api-key": brevo_key,
+        "content-type": "application/json",
+    }
+
+    sender_name = "Thaswika Crackers"
+    sender_email = from_email or "thaswikacrackers@gmail.com"
+    payload = {
+        "sender": {"name": sender_name, "email": sender_email},
+        "to": [{"email": r} for r in to_list],
+        "subject": subject,
+        "htmlContent": html_body,
+    }
+    if text_body:
+        payload["textContent"] = text_body
+
+    if attachment:
+        filename, file_bytes, _ = attachment
+        payload["attachment"] = [
+            {
+                "name": filename,
+                "content": base64.b64encode(file_bytes).decode("utf-8"),
+            }
+        ]
+
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            logger.info(f"Brevo API response {resp.status}: Successfully dispatched email to {to_list}")
+            return True
+    except urllib.error.HTTPError as e:
+        err_msg = e.read().decode("utf-8") if e.fp else str(e)
+        logger.error(f"Brevo API HTTP Error {e.code}: {err_msg}")
+        raise RuntimeError(f"Brevo API Error ({e.code}): {err_msg}")
+    except Exception as e:
+        logger.error(f"Brevo API request failed: {e}")
+        raise e
+
+
 def _send_email_worker(subject, text_body, html_body, recipient, attachment=None, raise_exceptions=False):
     """
-    Worker function to send an email. Can be run in a daemon thread or synchronously.
+    Worker function to send an email. First attempts Brevo HTTP API (if configured),
+    otherwise falls back to Django SMTP backend.
     """
     try:
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "").strip() or getattr(settings, "EMAIL_HOST_USER", "").strip()
+        from_email = (
+            getattr(settings, "DEFAULT_FROM_EMAIL", "").strip()
+            or getattr(settings, "EMAIL_HOST_USER", "").strip()
+            or "thaswikacrackers@gmail.com"
+        )
         if isinstance(recipient, str):
             to_list = [r.strip() for r in recipient.split(",") if r.strip()]
         else:
@@ -20,9 +80,15 @@ def _send_email_worker(subject, text_body, html_body, recipient, attachment=None
         if not to_list:
             logger.warning("No valid recipients for email notification.")
             if raise_exceptions:
-                raise ValueError("No recipient email specified in ADMIN_NOTIFICATION_EMAIL or EMAIL_HOST_USER.")
+                raise ValueError("No recipient email specified.")
             return False
 
+        # 1. Prefer Brevo HTTP API over Port 443 HTTPS (works on Render free tier!)
+        brevo_key = getattr(settings, "BREVO_API_KEY", "").strip()
+        if brevo_key:
+            return _send_via_brevo_api(subject, text_body, html_body, to_list, from_email, attachment=attachment)
+
+        # 2. Fall back to standard Django SMTP
         msg = EmailMultiAlternatives(
             subject=subject,
             body=text_body,
@@ -51,15 +117,20 @@ def send_admin_order_notification(order, synchronous=False, raise_exceptions=Fal
     Dispatches a professional, instant email alert to the store owner
     whenever a customer places a new order.
     """
+    brevo_key = getattr(settings, "BREVO_API_KEY", "").strip()
     host_user = getattr(settings, "EMAIL_HOST_USER", "").strip()
     host_pwd = getattr(settings, "EMAIL_HOST_PASSWORD", "").strip()
-    recipient = getattr(settings, "ADMIN_NOTIFICATION_EMAIL", "").strip() or host_user
+    recipient = (
+        getattr(settings, "ADMIN_NOTIFICATION_EMAIL", "").strip()
+        or host_user
+        or "orderdesksales@gmail.com"
+    )
 
-    # If email credentials are not set, log and skip gracefully
-    if not host_user or not host_pwd:
-        logger.info("Order email notification skipped: EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is not configured in .env.")
+    # If neither Brevo nor SMTP credentials are set, skip gracefully
+    if not brevo_key and (not host_user or not host_pwd):
+        logger.info("Order email notification skipped: Neither BREVO_API_KEY nor SMTP credentials configured.")
         if raise_exceptions:
-            raise ValueError("EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is not set in environment.")
+            raise ValueError("Neither BREVO_API_KEY nor SMTP credentials configured in environment.")
         return False
 
     if not recipient:
@@ -203,7 +274,9 @@ def send_admin_order_notification(order, synchronous=False, raise_exceptions=Fal
             logger.warning(f"Could not attach PDF invoice for order {order.order_number}: {pdf_err}")
 
         if synchronous:
-            return _send_email_worker(subject, text_body, html_body, recipient, attachment=attachment, raise_exceptions=raise_exceptions)
+            return _send_email_worker(
+                subject, text_body, html_body, recipient, attachment=attachment, raise_exceptions=raise_exceptions
+            )
         else:
             t = threading.Thread(
                 target=_send_email_worker,
@@ -229,9 +302,10 @@ def send_customer_order_confirmation(order, synchronous=False):
     if not customer_email or "@" not in customer_email:
         return False
 
+    brevo_key = getattr(settings, "BREVO_API_KEY", "").strip()
     host_user = getattr(settings, "EMAIL_HOST_USER", "").strip()
     host_pwd = getattr(settings, "EMAIL_HOST_PASSWORD", "").strip()
-    if not host_user or not host_pwd:
+    if not brevo_key and (not host_user or not host_pwd):
         return False
 
     try:

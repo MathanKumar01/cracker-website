@@ -1,10 +1,10 @@
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from django.core.mail import send_mail
+from orders.email_notifications import _send_email_worker
 
 
 class Command(BaseCommand):
-    help = "Test Gmail SMTP configuration and send a test email to verify credentials"
+    help = "Test email notification system (Brevo HTTP API or Gmail SMTP)"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -15,9 +15,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        self.stdout.write("=== TESTING SMTP EMAIL CONFIGURATION ===")
+        self.stdout.write("=== TESTING EMAIL CONFIGURATION ===")
 
-        host = getattr(settings, "EMAIL_HOST", "")
+        brevo_key = getattr(settings, "BREVO_API_KEY", "").strip()
+        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
         port = getattr(settings, "EMAIL_PORT", 587)
         tls = getattr(settings, "EMAIL_USE_TLS", True)
         host_user = getattr(settings, "EMAIL_HOST_USER", "").strip()
@@ -27,21 +28,19 @@ class Command(BaseCommand):
 
         recipient = options["recipient"] or admin_email
 
+        self.stdout.write(f"BREVO_API_KEY       : {'[SET - ' + str(len(brevo_key)) + ' chars]' if brevo_key else '[NOT SET]'}")
         self.stdout.write(f"EMAIL_HOST          : {host}")
         self.stdout.write(f"EMAIL_PORT          : {port}")
         self.stdout.write(f"EMAIL_USE_TLS       : {tls}")
-        self.stdout.write(f"EMAIL_HOST_USER     : {host_user if host_user else '[NOT SET - EMPTY]'}")
-        self.stdout.write(f"EMAIL_HOST_PASSWORD : {'[SET - ' + str(len(host_pwd)) + ' chars]' if host_pwd else '[NOT SET - EMPTY]'}")
-        self.stdout.write(f"DEFAULT_FROM_EMAIL  : {from_email if from_email else '[NOT SET - EMPTY]'}")
-        self.stdout.write(f"RECIPIENT EMAIL     : {recipient if recipient else '[NOT SET - EMPTY]'}")
+        self.stdout.write(f"EMAIL_HOST_USER     : {host_user if host_user else '[NOT SET]'}")
+        self.stdout.write(f"EMAIL_HOST_PASSWORD : {'[SET - ' + str(len(host_pwd)) + ' chars]' if host_pwd else '[NOT SET]'}")
+        self.stdout.write(f"DEFAULT_FROM_EMAIL  : {from_email if from_email else '[NOT SET]'}")
+        self.stdout.write(f"RECIPIENT EMAIL     : {recipient if recipient else '[NOT SET]'}")
 
-        if not host_user or not host_pwd:
+        if not brevo_key and (not host_user or not host_pwd):
             self.stdout.write(self.style.ERROR(
-                "\n[ERROR] EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is missing in backend/.env!\n"
-                "Please add your Gmail address and 16-character App Password to backend/.env:\n\n"
-                "  EMAIL_HOST_USER=yourstore@gmail.com\n"
-                "  EMAIL_HOST_PASSWORD=xxxx xxxx xxxx xxxx\n"
-                "  ADMIN_NOTIFICATION_EMAIL=yourstore@gmail.com\n"
+                "\n[ERROR] Neither BREVO_API_KEY nor SMTP credentials configured!\n"
+                "To bypass Render port 587 block, add BREVO_API_KEY to backend/.env and Render.\n"
             ))
             return
 
@@ -51,38 +50,34 @@ class Command(BaseCommand):
             ))
             return
 
-        self.stdout.write(f"\nAttempting to send test email to: {recipient} ...")
+        mode = "Brevo HTTPS API (Port 443)" if brevo_key else f"Gmail SMTP (Port {port})"
+        self.stdout.write(f"\nAttempting to send test email via {mode} to: {recipient} ...")
 
         try:
-            sent_count = send_mail(
+            success = _send_email_worker(
                 subject="Test Email from Thaswika Crackers Store",
-                message=(
+                text_body=(
                     "Congratulations!\n\n"
-                    "Your Gmail SMTP email notification system is working correctly.\n"
+                    "Your automated email notification system is working correctly.\n"
                     "You will now receive instant email alerts whenever a customer places an order.\n\n"
                     "- Thaswika Crackers Automated System"
                 ),
-                from_email=from_email,
-                recipient_list=[r.strip() for r in recipient.split(",") if r.strip()],
-                fail_silently=False,
+                html_body=(
+                    "<html><body>"
+                    "<h2>Congratulations!</h2>"
+                    "<p>Your automated email notification system is working correctly.</p>"
+                    "<p>You will now receive instant email alerts whenever a customer places an order.</p>"
+                    "</body></html>"
+                ),
+                recipient=recipient,
+                raise_exceptions=True,
             )
-            if sent_count > 0:
+            if success:
                 self.stdout.write(self.style.SUCCESS(
-                    f"\n[SUCCESS] Test email sent successfully to {recipient}!\n"
+                    f"\n[SUCCESS] Test email sent successfully to {recipient} via {mode}!\n"
                     "Please check your inbox (and Spam folder if you do not see it immediately)."
                 ))
             else:
-                self.stdout.write(self.style.WARNING("\n[WARNING] Django returned 0 emails sent."))
+                self.stdout.write(self.style.WARNING("\n[WARNING] Email dispatch returned False."))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"\n[FAILED] Error sending email: {e}"))
-            err_str = str(e).lower()
-            if "authentication" in err_str or "username and password not accepted" in err_str or "535" in err_str:
-                self.stdout.write(self.style.WARNING(
-                    "\n[HINT] Google rejected your username or password!\n"
-                    "Gmail requires a 16-character 'App Password', NOT your standard personal Gmail login password.\n"
-                    "To generate one:\n"
-                    "1. Go to https://myaccount.google.com/security\n"
-                    "2. Make sure '2-Step Verification' is turned ON.\n"
-                    "3. Search for 'App passwords' or visit https://myaccount.google.com/apppasswords\n"
-                    "4. Create an App Password called 'Crackers Store' and copy the 16 letters into EMAIL_HOST_PASSWORD in backend/.env."
-                ))

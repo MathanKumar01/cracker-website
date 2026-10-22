@@ -167,4 +167,7 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "").strip()
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "").replace(" ", "").strip()
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "").strip() or EMAIL_HOST_USER or "sales@thaswika.store"
 ADMIN_NOTIFICATION_EMAIL = os.environ.get("ADMIN_NOTIFICATION_EMAIL", "").strip() or EMAIL_HOST_USER
+# Brevo REST API Key (bypasses Render Free SMTP port 587 block via HTTPS port 443)
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "").strip()
+
 
