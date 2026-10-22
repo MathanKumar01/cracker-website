@@ -425,12 +425,12 @@ export default function AdminPage() {
                   type="password"
                   value={inputKey}
                   onChange={(e) => setInputKey(e.target.value)}
-                  placeholder="e.g. sakthi-admin-change-this-12345"
+                  placeholder="Enter your Admin API Key"
                   className="w-full rounded-xl border border-orange-200 bg-white p-3.5 text-stone-900 outline-none focus:border-[#a52b18] focus:ring-2 focus:ring-orange-200 text-sm font-mono"
                   autoFocus
                 />
                 <p className="mt-1.5 text-xs text-stone-500">
-                  Configured in backend <code className="font-mono bg-stone-100 px-1 py-0.5 rounded">.env</code> as <code className="font-mono text-[#a52b18]">ADMIN_API_KEY</code>.
+                  Enter your store&apos;s secure Admin API Key to access the dashboard.
                 </p>
               </div>
               <button

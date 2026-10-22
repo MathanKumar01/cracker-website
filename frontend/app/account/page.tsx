@@ -508,6 +508,12 @@ export default function Account() {
           {isRegister ? "Already have an account? Sign in here" : "Don't have an account? Create one"}
         </button>
 
+        <div className="mt-4 text-center">
+          <a href="/admin" className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full hover:bg-amber-100 transition inline-flex items-center gap-1">
+            🛡️ Store Admin Login →
+          </a>
+        </div>
+
         <div className="mt-6 border-t border-orange-100 pt-5 text-center">
           <p className="text-xs text-stone-500">
             Thaswika Crackers Sivakasi · Direct Diwali Fireworks
