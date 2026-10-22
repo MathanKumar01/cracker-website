@@ -147,10 +147,11 @@ class CreateOrderView(APIView):
         serializer.is_valid(raise_exception=True)
         order = serializer.save(user=request.user)
 
-        # Trigger instant notification to store owner (runs in background thread)
+        # Trigger instant notification to store owner and customer (runs in background thread)
         try:
-            from .email_notifications import send_admin_order_notification
+            from .email_notifications import send_admin_order_notification, send_customer_order_confirmation
             send_admin_order_notification(order)
+            send_customer_order_confirmation(order)
         except Exception as e:
             import logging
             logging.getLogger(__name__).error(f"Failed to dispatch order notification: {e}")
