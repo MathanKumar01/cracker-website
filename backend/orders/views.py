@@ -353,6 +353,47 @@ class ExportOrdersView(APIView):
         return response
 
 
+class AdminOrderResendEmailView(APIView):
+    """
+    Manually triggers sending the email notification for a specific order.
+    Returns whether the email succeeded or the exact error.
+    """
+    authentication_classes = [TokenAuthentication, AdminApiKeyAuthentication]
+    permission_classes = [IsAdminOrHasApiKey]
+
+    def post(self, request, pk):
+        order = get_order_by_identifier(pk)
+        if not order:
+            return Response({"detail": f"Order '{pk}' not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        from .email_notifications import send_admin_order_notification
+        from django.conf import settings
+        recipient = getattr(settings, "ADMIN_NOTIFICATION_EMAIL", "") or getattr(settings, "EMAIL_HOST_USER", "")
+
+        try:
+            success = send_admin_order_notification(order, synchronous=True, raise_exceptions=True)
+            if success:
+                return Response({
+                    "success": True,
+                    "detail": f"Email alert for Order #{order.order_number} successfully sent to {recipient}!"
+                })
+            else:
+                return Response({
+                    "success": False,
+                    "detail": "Email sending skipped. Verify EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in environment."
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            err_msg = str(e)
+            import logging
+            logging.getLogger(__name__).error(f"Resend email error: {err_msg}", exc_info=True)
+            if "110" in err_msg or "timed out" in err_msg.lower():
+                err_msg = f"{err_msg} (Render Free plan blocks outbound SMTP ports 25, 465, and 587)."
+            return Response({
+                "success": False,
+                "detail": f"SMTP Error: {err_msg}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 @authentication_classes([])
@@ -362,5 +403,6 @@ def health(request):
         "service": "Thaswika Crackers API",
         "database": "connected"
     })
+
 
 

@@ -48,6 +48,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null);
+  const [sendingEmailId, setSendingEmailId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -257,6 +258,28 @@ export default function AdminPage() {
       setError(err instanceof Error ? err.message : "Excel export failed.");
     } finally {
       setExportingExcel(false);
+    }
+  }
+
+  // Trigger sending email alert for an order
+  async function sendOrderEmail(order: Order) {
+    setSendingEmailId(order.id);
+    setError("");
+    try {
+      const res = await fetch(`${API}/admin/orders/${order.id}/resend-email/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.detail || "Failed to send email notification.");
+      }
+      setSuccessMsg(`🎉 ${data.detail}`);
+      setTimeout(() => setSuccessMsg(""), 6000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send email.");
+    } finally {
+      setSendingEmailId(null);
     }
   }
 
@@ -740,6 +763,16 @@ export default function AdminPage() {
                       >
                         <span>🖨️</span>
                         <span>Print</span>
+                      </button>
+
+                      <button
+                        onClick={() => sendOrderEmail(o)}
+                        disabled={sendingEmailId === o.id}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs font-bold text-sky-800 hover:bg-sky-100 transition shadow-sm disabled:opacity-50"
+                        title="Send or resend email notification to store owner and customer"
+                      >
+                        <span>✉️</span>
+                        <span>{sendingEmailId === o.id ? "Sending..." : "Send Email"}</span>
                       </button>
 
                       <button

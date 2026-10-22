@@ -12,6 +12,7 @@ from .views import (
     LoginView,
     CurrentUserView,
     AdminKeyVerifyView,
+    AdminOrderResendEmailView,
 )
 
 urlpatterns = [
@@ -29,5 +30,7 @@ urlpatterns = [
     path("admin/orders/<str:pk>/", AdminOrderDetailView.as_view(), name="admin-order-detail"),
     path("admin/orders/<str:pk>/pdf/", AdminOrderPdfView.as_view(), name="admin-order-pdf"),
     path("admin/orders/<str:pk>/pdf", AdminOrderPdfView.as_view()),
+    path("admin/orders/<str:pk>/resend-email/", AdminOrderResendEmailView.as_view(), name="admin-order-resend-email"),
+    path("admin/orders/<str:pk>/resend-email", AdminOrderResendEmailView.as_view()),
 ]
 

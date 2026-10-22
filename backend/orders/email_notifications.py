@@ -6,7 +6,7 @@ from django.core.mail import EmailMultiAlternatives
 logger = logging.getLogger(__name__)
 
 
-def _send_email_worker(subject, text_body, html_body, recipient, attachment=None):
+def _send_email_worker(subject, text_body, html_body, recipient, attachment=None, raise_exceptions=False):
     """
     Worker function to send an email. Can be run in a daemon thread or synchronously.
     """
@@ -19,6 +19,8 @@ def _send_email_worker(subject, text_body, html_body, recipient, attachment=None
 
         if not to_list:
             logger.warning("No valid recipients for email notification.")
+            if raise_exceptions:
+                raise ValueError("No recipient email specified in ADMIN_NOTIFICATION_EMAIL or EMAIL_HOST_USER.")
             return False
 
         msg = EmailMultiAlternatives(
@@ -39,10 +41,12 @@ def _send_email_worker(subject, text_body, html_body, recipient, attachment=None
         return True
     except Exception as e:
         logger.error(f"Failed to send email notification to {recipient}: {e}", exc_info=True)
+        if raise_exceptions:
+            raise e
         return False
 
 
-def send_admin_order_notification(order, synchronous=False):
+def send_admin_order_notification(order, synchronous=False, raise_exceptions=False):
     """
     Dispatches a professional, instant email alert to the store owner
     whenever a customer places a new order.
@@ -54,10 +58,14 @@ def send_admin_order_notification(order, synchronous=False):
     # If email credentials are not set, log and skip gracefully
     if not host_user or not host_pwd:
         logger.info("Order email notification skipped: EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is not configured in .env.")
+        if raise_exceptions:
+            raise ValueError("EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is not set in environment.")
         return False
 
     if not recipient:
         logger.warning("Order email notification skipped: No ADMIN_NOTIFICATION_EMAIL configured.")
+        if raise_exceptions:
+            raise ValueError("ADMIN_NOTIFICATION_EMAIL is not set in environment.")
         return False
 
     try:
@@ -195,7 +203,7 @@ def send_admin_order_notification(order, synchronous=False):
             logger.warning(f"Could not attach PDF invoice for order {order.order_number}: {pdf_err}")
 
         if synchronous:
-            return _send_email_worker(subject, text_body, html_body, recipient, attachment=attachment)
+            return _send_email_worker(subject, text_body, html_body, recipient, attachment=attachment, raise_exceptions=raise_exceptions)
         else:
             t = threading.Thread(
                 target=_send_email_worker,
@@ -207,6 +215,8 @@ def send_admin_order_notification(order, synchronous=False):
 
     except Exception as e:
         logger.error(f"Error preparing order notification email for order {getattr(order, 'order_number', '?')}: {e}", exc_info=True)
+        if raise_exceptions:
+            raise e
         return False
 
 
